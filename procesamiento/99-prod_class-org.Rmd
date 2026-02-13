@@ -167,83 +167,145 @@ dfreg$iseires_hh3 <- ntile(dfreg$iseires_hh,3)
 dfreg$iseires_hh3 <- as.factor(car::recode(dfreg$iseires_hh3,"NA=99"))
 dfreg$iseires_hh <- car::recode(dfreg$iseires_hh,"NA=0")
 
-# Network status and size ------------------------------------------------------
-
-# Compute weighted mean, variance, and SD of ISEI for each respondent
-dfreg <- dfreg %>%
-  rowwise() %>%  # Operate row-by-row
-  mutate(
-    # Step 1: Total number of known people (sum of all n_* variables)
-    total_n = sum(
-      n_doctor, n_ceo, n_lawyer, n_univprof, n_account, n_secret,
-      n_shopassi, n_kinder, n_waiter, n_carmech, n_taxi, n_stvend, n_cleaner,
-      na.rm = TRUE  # Ignore NAs when summing
-    ),
-
-    # Step 2: Weighted mean of ISEI (sum(isei * n) / total_n)
-    mean_isei = sum(
-      isei_doctor   * n_doctor,
-      isei_ceo      * n_ceo,
-      isei_lawyer   * n_lawyer,
-      isei_univprof * n_univprof,
-      isei_account  * n_account,
-      isei_secret   * n_secret,
-      isei_shopassi * n_shopassi,
-      isei_kinder   * n_kinder,
-      isei_waiter   * n_waiter,
-      isei_carmech  * n_carmech,
-      isei_taxi     * n_taxi,
-      isei_stvend   * n_stvend,
-      isei_cleaner  * n_cleaner,
-      na.rm = TRUE
-    ) / total_n,
-
-    # Step 3: Weighted variance: sum(w * (x - mean)^2) / total_n
-    var_isei = sum(
-      n_doctor   * (isei_doctor   - mean_isei)^2,
-      n_ceo      * (isei_ceo      - mean_isei)^2,
-      n_lawyer   * (isei_lawyer   - mean_isei)^2,
-      n_univprof * (isei_univprof - mean_isei)^2,
-      n_account  * (isei_account  - mean_isei)^2,
-      n_secret   * (isei_secret   - mean_isei)^2,
-      n_shopassi * (isei_shopassi - mean_isei)^2,
-      n_kinder   * (isei_kinder   - mean_isei)^2,
-      n_waiter   * (isei_waiter   - mean_isei)^2,
-      n_carmech  * (isei_carmech  - mean_isei)^2,
-      n_taxi     * (isei_taxi     - mean_isei)^2,
-      n_stvend   * (isei_stvend   - mean_isei)^2,
-      n_cleaner  * (isei_cleaner  - mean_isei)^2,
-      na.rm = TRUE
-    ) / total_n,
-
-    # Step 4: Standard deviation = square root of variance
-    sd_isei = sqrt(var_isei)
-  ) %>%
-  ungroup()
-dfreg$isei_cv <- (dfreg$sd_isei/dfreg$mean_isei)*100;summary(dfreg$isei_cv)
-
-
-n_vars <- c("n_doctor", "n_ceo", "n_lawyer", "n_univprof", "n_account", 
-            "n_secret", "n_shopassi", "n_kinder", "n_waiter", 
-            "n_carmech", "n_taxi", "n_stvend", "n_cleaner")
-
-# Network entropy---------------------------------------------------------------
-# Step 3: Compute Entropy separately
-dfreg <- 
-  dfreg %>%
-  rowwise() %>%
-  mutate(
-    entropy_contacts = {
-      p_i <- c_across(all_of(n_vars))/total_n
-      p_i <- p_i[p_i > 0]  # Avoid log(0)
-      sum(p_i * log(p_i), na.rm = TRUE) * (-1)
-    }
-  ) %>%
-  ungroup()
-dfreg$entropy_contacts <- dfreg$entropy_contacts/log(13) # Normalize entropy (0-1)
 # Market justice preference index ----------------------------------------------
 dfreg$market<- rowMeans(dfreg[,c("just_educ","just_salud","just_pension")],na.rm = T)
 sjlabelled::set_label(dfreg$market) <- "Market-based distribution of social services (3 items)"
+
+library(tidyr)
+df_filled <- dfreg %>%
+  arrange(idencuesta, ola) %>%      # ordenar!
+  group_by(idencuesta) %>%
+  fill(market, .direction = "down") %>%   # LOCF
+  ungroup()
+
+
+orgas <-  dfreg %>% select(idencuesta,ola,egp=egp7_espinoza,mem_jjvv:mem_stud)
+names(orgas)
+orgas %>% select(starts_with("mem_")) %>% 
+  plot_stackfrq()
+
+frq(orgas$mem_jjvv)
+vars <- c(
+  "mem_jjvv", "mem_reli", "mem_poli", "mem_unio",
+  "mem_grem", "mem_char", "mem_spor", "mem_stud"
+)
+
+orgas[ paste0(vars, "_d") ] <-
+  lapply(orgas[vars], function(x)
+    as.numeric(car::recode(x, "1=0; 2:3=1; else=NA",as.numeric = T))
+  )
+
+table(orgas$mem_jjvv,orgas$mem_jjvv_d)
+
+# orgas <- orgas %>% filter(ola==3)
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggalluvial)
+
+# identificar automáticamente las variables de organizaciones
+org_vars <- grep("_d$", names(orgas), value = TRUE)
+
+# pasar a formato long (una fila = una membresía)
+orgas_long <- orgas %>%
+  select(egp, all_of(org_vars)) %>%
+  pivot_longer(
+    cols = all_of(org_vars),
+    names_to = "organization",
+    values_to = "member"
+  ) %>%
+  filter(member == 2)
+
+flows <- orgas_long %>%
+  count(egp, organization)
+
+flows <- flows %>%
+  mutate(
+    organization = gsub("mem_|_d", "", organization)
+  )
+
+flows<- flows %>% filter(!is.na(egp))
+
+ggplot(flows,
+       aes(axis1 = egp,
+           axis2 = organization,
+           y = n)) +
+  geom_alluvium(aes(fill = egp), alpha = 0.8, width = 1/12) +
+  geom_stratum(width = 1/6, color = "grey30") +
+  geom_text(stat = "stratum",
+            aes(label = after_stat(stratum)),
+            size = 3) +
+  theme_minimal() +
+  labs(
+    title = "Flows from Social Class to Voluntary Organizations",
+    subtitle = "Each flow represents a membership (multiple memberships per individual allowed)",
+    x = NULL,
+    y = "Number of memberships",
+    fill = "Social class"
+  )
+
+
+library(dplyr)
+library(tidyr)
+
+org_vars <- grep("_d$", names(orgas), value = TRUE)
+
+orgas_long <- orgas %>%
+  select(egp, all_of(org_vars)) %>%
+  pivot_longer(
+    cols = all_of(org_vars),
+    names_to = "organization",
+    values_to = "member"
+  ) %>%
+  filter(member == 2) %>%
+  mutate(
+    organization = gsub("mem_|_d", "", organization)
+  )
+
+counts <- orgas_long %>%
+  count(organization, egp)
+org_size <- counts %>%
+  group_by(organization) %>%
+  summarise(total = sum(n), .groups = "drop")
+
+composition <- counts %>%
+  left_join(org_size, by = "organization") %>%
+  mutate(
+    share = n / total
+  )
+
+library(ggplot2)
+
+shape_values <- c(16, 17, 15, 18, 1, 2, 0, 8)
+
+ggplot(composition,
+       aes(x = organization,
+           y = share,
+           fill = egp,
+           shape = egp)) +
+  geom_point(
+    position = position_dodge(width = 0.3),
+    size = 3
+  ) +
+  scale_shape_manual(values = shape_values) +
+  scale_y_continuous(
+    limits = c(0, 0.3),
+    labels = scales::percent_format(accuracy = 1)
+  ) +
+  labs(
+    x = "Voluntary organization",
+    y = "Class composition (%)",
+    fill = "Social class",
+    shape = "Social class"
+  ) +
+  theme_gray() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+
+
 
 # Set Analytical sample-------------------------------------------------------------
 df1 <-  
