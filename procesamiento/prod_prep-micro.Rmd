@@ -596,12 +596,10 @@ elsoc_long_2016_2022.2$egp7_espinoza <-
                     "Technicians and supervisors","Skilled workers","Unskilled workers"))
 frq(elsoc_long_2016_2022.2$egp7_espinoza)
 
-elsoc_long_2016_2022.2 %>% filter(ola_w01==1,muestra==1) %>% sjPlot::plot_frq(egp7_espinoza)
-elsoc_long_2016_2022.2 %>% filter(ola_w03==1,muestra==1) %>% sjPlot::plot_frq(egp7_espinoza)
-elsoc_long_2016_2022.2 %>% filter(ola_w06==1,muestra==1) %>% sjPlot::plot_frq(egp7_espinoza)
+# elsoc_long_2016_2022.2 %>% filter(ola_w01==1,muestra==1) %>% sjPlot::plot_frq(egp7_espinoza)
+# elsoc_long_2016_2022.2 %>% filter(ola_w03==1,muestra==1) %>% sjPlot::plot_frq(egp7_espinoza)
+# elsoc_long_2016_2022.2 %>% filter(ola_w06==1,muestra==1) %>% sjPlot::plot_frq(egp7_espinoza)
 ```
-
-
 
 ```{r just-dist}
 sjmisc::frq(elsoc_long_2016_2022.2$just_educ)
@@ -1453,18 +1451,148 @@ elsoc_long_2016_2022.2$know_mig <-
 sjPlot::tab_xtab(elsoc_long_2016_2022.2$know_mig,elsoc_long_2016_2022.2$ola)
 ```
 
+
+# Personality
+
+```{r}
+# item names as in your data frame
+big5_items <- list(
+  Agreeableness = c("s22_02", "s22_07"),  # 02 trusting (+), 07 finds negatives in others (R)
+  Conscientiousness = c("s22_08", "s22_03"), # 08 perfectionist (+), 03 lazy (R)
+  EmotionalStability = c("s22_04", "s22_09"), # 04 relaxed (+), 09 nervous easily (R)
+  Openness = c("s22_10", "s22_05"), # 10 imaginative (+), 05 few artistic interests (R)
+  Extraversion = c("s22_06") # 06 sociable (+)
+)
+
+# which of the above are reverse keyed?
+reverse_keys <- c(
+  s22_07 = TRUE,  # finds negatives in others
+  s22_03 = TRUE,  # lazy
+  s22_09 = TRUE,  # nervous easily
+  s22_05 = TRUE   # few artistic interests
+)
+
+# If needed, set Likert bounds for reverse coding
+LIKERT_MIN <- 1
+LIKERT_MAX <- 5
+rev_code   <- function(x, min = LIKERT_MIN, max = LIKERT_MAX) ifelse(is.na(x), NA_real_, (min + max) - x)
+
+# 1) Extraversion (positive)
+elsoc_long_2016_2022.2$extraver <- elsoc_long_2016_2022.2$s22_06  # sociable (+)
+
+# 2) Agreeableness (mix: one reverse)
+#   s22_02 trusting (+)
+#   s22_07 finds negatives in others (R)
+elsoc_long_2016_2022.2$agree_pos <- elsoc_long_2016_2022.2$s22_02
+elsoc_long_2016_2022.2$agree_neg_R <- rev_code(elsoc_long_2016_2022.2$s22_07)
+
+# 3) Conscientiousness (mix: one reverse)
+#   s22_08 perfectionist (+)
+#   s22_03 lazy (R)
+elsoc_long_2016_2022.2$consc_pos <- elsoc_long_2016_2022.2$s22_08
+elsoc_long_2016_2022.2$consc_neg_R <- rev_code(elsoc_long_2016_2022.2$s22_03)
+
+# 4) Emotional Stability (Neuroticism reversed; mix: one reverse)
+#   s22_04 relaxed (+)
+#   s22_09 nervous easily (R)
+elsoc_long_2016_2022.2$emostab_pos <- elsoc_long_2016_2022.2$s22_04
+elsoc_long_2016_2022.2$emostab_neg_R <- rev_code(elsoc_long_2016_2022.2$s22_09)
+
+# 5) Openness (mix: one reverse)
+#   s22_10 imaginative (+)
+#   s22_05 few artistic interests (R)
+elsoc_long_2016_2022.2$open_pos <- elsoc_long_2016_2022.2$s22_10
+elsoc_long_2016_2022.2$open_neg_R <- rev_code(elsoc_long_2016_2022.2$s22_05)
+```
+
+# Migration and Educational Family background
+
+```{r nationality}
+elsoc_long_2016_2022.2$m45 # nationality
+frq(elsoc_long_2016_2022.2$m45)
+
+table(elsoc_long_2016_2022.2$m45,elsoc_long_2016_2022.2$ola)
+
+elsoc_long_2016_2022.2$migration<- drop_labels(car::recode(elsoc_long_2016_2022.2$m45,recodes = "1=0;c(2,3,4,5,6,7,8)=1;NA=2"))
+elsoc_long_2016_2022.2$migration <- set_labels(elsoc_long_2016_2022.2$migration,labels = c("Chilean","Migrant","Missing"))
+frq(elsoc_long_2016_2022.2$migration)
+
+```
+
+```{r parentaleduc}
+elsoc_long_2016_2022.2$m27 # nationality
+frq(elsoc_long_2016_2022.2$m27)
+frq(elsoc_long_2016_2022.2$m28)
+
+table(elsoc_long_2016_2022.2$m27,elsoc_long_2016_2022.2$ola)
+table(elsoc_long_2016_2022.2$m28,elsoc_long_2016_2022.2$ola)
+
+elsoc_long_2016_2022.2$fathereduc <- 
+  car::recode(elsoc_long_2016_2022.2$m27,
+              "1=0;c(2,3)=1;c(4,5)=2;c(6,7)=3;c(8,9,10)=4; c(-888,-999)=NA")
+elsoc_long_2016_2022.2$fathereduc <-
+  factor(elsoc_long_2016_2022.2$fathereduc,
+         labels = c("No formal education","Primary Education","High school Education","Technical Education ","Universitary and postgraduate Education"),ordered = T)
+
+elsoc_long_2016_2022.2$mothereduc <- 
+  car::recode(elsoc_long_2016_2022.2$m28,
+              "1=0;c(2,3)=1;c(4,5)=2;c(6,7)=3;c(8,9,10)=4; c(-888,-999)=NA")
+elsoc_long_2016_2022.2$mothereduc <-
+  factor(elsoc_long_2016_2022.2$mothereduc,
+         labels = c("No formal education","Primary Education","High school Education","Technical Education ","Universitary and postgraduate Education"),ordered = T)
+
+
+frq(ifelse(is.na(elsoc_long_2016_2022.2$fathereduc) & !is.na(elsoc_long_2016_2022.2$mothereduc),yes = 1,no = 0))
+
+frq(ifelse(is.na(elsoc_long_2016_2022.2$mothereduc),yes = 1,no = 0))
+ifelse(is.na(elsoc_long_2016_2022.2$fathereduc),yes = 1,no = 0)
+
+frq(elsoc_long_2016_2022.2$fathereduc>elsoc_long_2016_2022.2$mothereduc)
+
+# dominance parental education
+elsoc_long_2016_2022.2$parenteduc <- 
+ifelse(elsoc_long_2016_2022.2$fathereduc>elsoc_long_2016_2022.2$mothereduc,
+       yes=elsoc_long_2016_2022.2$fathereduc,
+       no=elsoc_long_2016_2022.2$mothereduc)
+
+elsoc_long_2016_2022.2$parenteduc <- 
+  ifelse(is.na(elsoc_long_2016_2022.2$parenteduc),
+         yes = elsoc_long_2016_2022.2$mothereduc,no = elsoc_long_2016_2022.2$parenteduc)
+
+frq(elsoc_long_2016_2022.2$parenteduc)
+
+elsoc_long_2016_2022.2$parenteduc <- 
+  ifelse(is.na(elsoc_long_2016_2022.2$parenteduc),
+         yes = elsoc_long_2016_2022.2$fathereduc,no = elsoc_long_2016_2022.2$parenteduc)
+
+frq(elsoc_long_2016_2022.2$parenteduc)
+
+frq(elsoc_long_2016_2022.2$parenteduc)
+elsoc_long_2016_2022.2$parenteduc<- ifelse(is.na(elsoc_long_2016_2022.2$parenteduc),99,elsoc_long_2016_2022.2$parenteduc)
+
+elsoc_long_2016_2022.2$parenteduc <-
+  factor(elsoc_long_2016_2022.2$parenteduc,
+         labels = c("No formal education","Primary Education","High school Education","Technical Education ","Universitary and postgraduate Education", "No information"),ordered = T)
+```
+
+
 # Variables fixed to wave 1
 
 ```{r fix-vars-t1}
 library(panelr)
+
 elsoc_long <-
 elsoc_long_2016_2022.2 %>% 
   # filter(muestra==1) %>% 
   select(idencuesta,ola,muestra,sexo,edad,educ,educyear,ing_pc,ing_pc_eq,
+         parenteduc, # parental education
+         extraver, # extraverssion
+         migration, # migration
          quintil,quintil1,incomegrp,egp11_label,egp11_r_label,egp7_espinoza,
          subclass,ess,
          egp8_r_label,egp8_r_label_na,m02,isei08res,comuna,
          oesch8_label,oesch5_label,oesch8_r_label,oesch5_r_label, strong_tie)  
+
 
 elsoc <- panel_data(elsoc_long, id = idencuesta, wave = ola)
 elsoc_wide <- widen_panel(elsoc, separator = "_")
@@ -1499,7 +1627,10 @@ elsoc_fix_t1 <- elsoc_wide %>% select(idencuesta,
                                       oesch8_r_fx=oesch8_r_label_1, 
                                       inc_mob,
                                       oesch5_r_fx=oesch5_r_label_1,
-                                      strong_tie_t1=strong_tie_1
+                                      strong_tie_t1=strong_tie_1,
+                                      extraverw1=extraver,
+                                      migrationw1=migration_1,
+                                      parenteducw1=parenteduc_1
                                       )
 
 elsoc_fix_t1$isei08res_ter_fx <- as.factor(ntile(elsoc_fix_t1$isei08res_fx,3));frq(elsoc_fix_t1$isei08res_ter_fx)
