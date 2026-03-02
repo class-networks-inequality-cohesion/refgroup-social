@@ -15,7 +15,7 @@ editor_options:
 
 # Setup
 
-```{r dfreg}
+```{r proc-data}
 set1 <-  RColorBrewer::brewer.pal(n = 8, name = "Set1")
 options(ggplot2.discrete.fill = set1)
 options(ggplot2.discrete.colour = set1)
@@ -101,39 +101,322 @@ dfreg$isco88res_3 <- car::recode(dfreg$isco88res_3, "
   7219 = 7213;
   3154 = 3144;
   2342 = 2320")
-# Create ISCO 88 families-, 1 digit and grouped in 3 (Upper, intermediate, Lower)
+
+
+# CIUO-CL INE -----------------------------------------------------------------
+library(httr)
+glosa<- car::recode(dfreg$m57,"NA=''")
+
+request <-  httr::POST("https://rapps.ine.cl:9292/predict",
+                       encode = "json",
+                       body =  list(text = glosa,
+                                    classification = "ciuo",
+                                    digits = 1))
+
+# Revisar el status
+httr::status_code(request)
+
+# Extraer el contenido
+response <- httr::content(request,encoding = "UTF-8",as = "text")
+
+# Ordenar el contenido
+library(jsonlite)
+isco_ine_father<- fromJSON(response) %>% as.data.frame()
+dfreg$isco_ine_father <- isco_ine_father$cod_final
+dfreg$isco_ine_father <- ifelse(is.na(dfreg$m57),yes = NA,no = dfreg$isco_ine_father)
+frq(dfreg$isco_ine_father)
+
+# 0 = in labor market, 1 =  not in labor market
+dfreg$neet_father <- dfreg$m58
+table(dfreg$neet_father,dfreg$ola,useNA = 'ifany')
+table((dfreg$neet_father %in% c(6,7) & dfreg$ola==6))
+
+dfreg$neet_father <- ifelse((dfreg$neet_father %in% c(6,7) & dfreg$ola == 6),yes = 1,no = 0)
+table(dfreg$neet_father,dfreg$ola)
+table(dfreg$neet_father,dfreg$isco_ine_father)
+
+dfreg$isco03father <- car::recode(dfreg$isco_ine_father,"c('1','2','3')=3;c('4','5','0','6','7','8')=2;c('9')=1")
+frq(dfreg$isco03father)
+table(dfreg$neet_father,dfreg$isco03father,useNA = "ifany")
+
+table(dfreg$neet_father,dfreg$isco03father,useNA = "ifany")
+
+dfreg$isco03father<- ifelse(is.na(dfreg$isco03father),yes = 99,no = dfreg$isco03father)
+
+table(dfreg$isco03father,dfreg$ola,useNA = "ifany")
+
+dfreg <-
+left_join(x = dfreg,
+          y = (dfreg %>% filter(ola==6) %>% select(idencuesta,isco_father=isco03father)),
+         by = "idencuesta")
+
+frq(dfreg$isco_father)
+dfreg$isco_father <- car::recode(dfreg$isco_father,"NA=99")
+frq(dfreg$isco_father)
+
+# Create ISCO 88 families-, 1 digit and grouped in 3 (Upper, intermediate, Lower) -------------------------------------
+library(DIGCLASS)
 dfreg$isco08res_3<- DIGCLASS::isco88_to_isco08(dfreg$isco88res_3,label = FALSE,to_factor = FALSE)
+dfreg$isco08spo_3<- DIGCLASS::isco88_to_isco08(dfreg$isco88_3,label = FALSE,to_factor = FALSE)
 dfreg %>% select(m03,isco88res_3,isco08res_3) %>% filter(!is.na(m03)& is.na(isco88res_3)) %>% head(20)
 dfreg$isco08res_3 <- ifelse(dfreg$isco08res_3 %in% c(3452,1252,5164,9999,9955,9988),"2000",dfreg$isco08res_3)
-dfreg$isco08_1lvl <- DIGCLASS::isco08_swap(dfreg$isco08res_3,from = 4,to = 1)
+
+dfreg$isco08_1lvlspo <- DIGCLASS::isco08_swap(dfreg$isco08spo_3,from = 4,to = 1)
+dfreg$isco08_1lvl   <- DIGCLASS::isco08_swap(dfreg$isco08res_3,from = 4,to = 1)
+
+dfreg$isco08_1lvlhh <- ifelse(is.na(dfreg$isco08_1lvl) & dfreg$m02 %in%c (4,5,6,7,8,9),yes = dfreg$isco08_1lvlspo,no = dfreg$isco08_1lvl)
+
 frq(dfreg$isco08_1lvl)
-# dfreg$isco03 <- car::recode(dfreg$isco08_1lvl,"c('1000','2000','3000')=3;c('4000','5000','6000','7000','8000')=2;c('0000','9000')=1")
+frq(dfreg$isco08_1lvlhh)
+
+dfreg %>% 
+  group_by(isco08_1lvl) %>% 
+  summarise(mean=mean(isei08res,na.rm=T),median=median(isei08res,na.rm=T),min=min(isei08res,na.rm=T),max=max(isei08res,na.rm=T))
 
 # Following this:
 # https://www.ine.gob.cl/docs/default-source/buenas-practicas/clasificaciones/ciuo/clasificador/ciuo-08-cl.pdf
 # Consult "Cuadro 4" 
-
 dfreg$isco03 <- car::recode(dfreg$isco08_1lvl,"c('1000','2000','3000')=3;c('4000','5000','0000','6000','7000','8000')=2;c('9000')=1")
-
-frq(dfreg$isco03)
 dfreg %>% select(m03,isco88res,isco88res_2,isco88res_3,isco08res_3,isco08_1lvl,isco03) %>% filter(isco03 == "0000")
-table(dfreg$isco03,dfreg$ola)
-tab_xtab(dfreg$isco03,dfreg$m02,show.na = T)
 dfreg$isco03_neet <- ifelse(is.na(dfreg$isco03)& dfreg$m02 %in%c (4,5,6,7,8,9),yes = 4,no = dfreg$isco03)
 
-table(dfreg$isco03_neet)
-tab_xtab(dfreg$isco03_neet,dfreg$m02,show.na = T)
-
-dfreg$isco03b <- car::recode(dfreg$isco08_1lvl,"c('1000','2000')=3;c('3000','4000','5000','0000')=2;c('6000','7000','8000','9000')=1")
-
-frq(dfreg$isco03b)
+dfreg$isco03b <- car::recode(dfreg$isco08_1lvl,"c('1000','2000')=3;c('3000','4000','5000','0000','6000','7000','8000')=2;c('9000')=1")
 dfreg %>% select(m03,isco88res,isco88res_2,isco88res_3,isco08res_3,isco08_1lvl,isco03,isco03b) %>% filter(isco03 == "0000")
-table(dfreg$isco03b,dfreg$ola)
-tab_xtab(dfreg$isco03b,dfreg$m02,show.na = T)
 dfreg$isco03b_neet <- ifelse(is.na(dfreg$isco03b)& dfreg$m02 %in%c (4,5,6,7,8,9),yes = 4,no = dfreg$isco03b)
 
-table(dfreg$isco03b_neet)
-tab_xtab(dfreg$isco03b_neet,dfreg$m02,show.na = T)
+dfreg$isco03c <- car::recode(dfreg$isco08_1lvlhh,"c('1000','2000','3000')=3;c('4000','5000','0000','7000','8000')=2;c('6000','9000')=1")
+dfreg %>% select(m03,isco88res,isco88res_2,isco88res_3,isco08res_3,isco08_1lvl,isco03,isco03b) %>% filter(isco03 == "0000")
+dfreg$isco03c_neet <- ifelse(is.na(dfreg$isco03b)& dfreg$m02 %in%c (4,5,6,7,8,9),yes = 4,no = dfreg$isco03b)
+
+
+# Occupational class scheme (individual) -------------------------------
+library(DIGCLASS)
+dfreg$firm_size <- car::recode(dfreg$m05, 
+                                "1 = 1;          
+                                 2 = 3;          
+                                 3 = 7;          
+                                 4 = 29.5;       
+                                 5 = 124.5;      
+                                 6 = 300")       
+summary(dfreg$firm_size)
+dfreg <- 
+dfreg %>% 
+  mutate(
+    self_employed_r_fix=ifelse((!is.na(isco88res_3) & is.na(self_employed_r)),yes = 0,no =self_employed_r),
+    is_supervisor_r_fix=ifelse((!is.na(isco88res_3) & is.na(is_supervisor_r)),yes = 0,no =is_supervisor_r),
+    n_employees_r_fix=ifelse((!is.na(isco88res_3) & is.na(firm_size)),yes = n_employees_r,no =firm_size)
+  )
+
+
+classschemes <- 
+dfreg %>%
+  transmute(
+    isco08_1lvl,isco03_neet,isco88res_3,is_supervisor_r,is_supervisor_r_fix,self_employed_r,self_employed_r_fix,n_employees_r,n_employees_r_fix,firm_size,isco88res_3,
+    egp_11=isco88_to_egp(
+      isco88res_3,
+      self_employed_r,
+      firm_size,
+      n_classes = 11,
+      label = FALSE,
+      to_factor = FALSE),
+    egp_11_lab=isco88_to_egp(
+      isco88res_3,
+      self_employed_r,
+      firm_size,
+      n_classes = 11,
+      label = TRUE,
+      to_factor = FALSE),
+    egp_11_lab_fix=isco88_to_egp(
+      isco88res_3,
+      self_employed_r_fix,
+      n_employees_r_fix,
+      n_classes = 11,
+      label = TRUE,
+      to_factor = FALSE)    
+  )
+
+# for all these cases I should declare them: employees 0, self-employed=0.
+classschemes <- 
+classschemes %>% 
+  mutate(
+    self_employed_r_fix=ifelse((is.na(egp_11_lab_fix) & !is.na(isco03_neet)),yes = 0,no =self_employed_r_fix),
+    n_employees_r_fix=ifelse((is.na(egp_11_lab_fix) & !is.na(isco03_neet)),yes = 0,no =n_employees_r_fix)
+  )
+
+classschemes <- 
+classschemes %>%
+  mutate(
+    isco08_1lvl,isco03_neet,isco88res_3,
+    is_supervisor_r,is_supervisor_r_fix,
+    self_employed_r,self_employed_r_fix,
+    n_employees_r,n_employees_r_fix,
+    firm_size,isco88res_3,
+    egp_11_lab_fix2=isco88_to_egp(
+      isco88res_3,
+      self_employed_r_fix,
+      n_employees_r_fix,
+      n_classes = 11,
+      label = TRUE,
+      to_factor = FALSE),
+    oesch8 = isco88_to_oesch(
+      isco88res_3,
+      self_employed_r_fix,
+      n_employees_r_fix,
+      n_classes = 8,
+      label = TRUE,
+      to_factor = FALSE
+)
+    
+  )
+
+# EGP 11........................................................................
+classschemes$egp_11_lab_fix2[classschemes$isco88res_3==110] <- "'IIIa: Routine Nonmanual'"
+classschemes$egp_11_lab_fix2[classschemes$isco03_neet==4] <- "'NEET'"
+classschemes$egp_11_lab_fix2 <-
+  factor(stringr::str_replace_all(stringr::str_remove_all(classschemes$egp_11_lab_fix2, "'|:"), "-", " "),
+         levels = c("I Higher Controllers","II Lower Controllers",
+                    "IVa Self employed with employees",
+                    "IVb Self employed with no employees",
+                    "IVc Self employed Farmer",
+                    "IIIa Routine Nonmanual",
+                    "IIIb Lower Sales Service",
+                    "V Manual Supervisors",
+                    "VI Skilled Worker",
+                    "VIIa Unskilled Worker",
+                    "VIIb Farm Labor","NEET")
+         )
+
+dfreg$soclass <- classschemes$egp_11_lab_fix2
+
+# Oesch 8 ..................................................................
+classschemes$oesch8[classschemes$isco88res_3==110] <- "'Service workers'"
+classschemes$oesch8[classschemes$isco03_neet==4] <- "'NEET'"
+
+classschemes$oesch8 <-
+  factor(stringr::str_replace_all(stringr::str_remove_all(classschemes$oesch8, "'|:"), "-", " "),
+         levels = c(
+           "Self employed professionals and large employers",  # Highest
+           "(Associate) managers",
+           "Socio cultural (semi )professionals",
+           "Technical (semi )professionals",
+           "Small business owners",
+           "Clerks",
+           "Production workers",
+           "Service workers",'NEET'                             # Lowest
+         )
+         )
+
+dfreg$oesch8 <- classschemes$oesch8
+
+table(dfreg$oesch8,dfreg$soclass,useNA = "ifany")
+frq(dfreg$oesch8)
+
+dfreg %>% 
+  group_by(oesch8) %>% 
+  summarise(mean=mean(isei08res,na.rm=T),median=median(isei08res,na.rm=T),min=min(isei08res,na.rm=T),max=max(isei08res,na.rm=T))
+
+dfreg %>% 
+  group_by(soclass) %>% 
+  summarise(mean=mean(isei08res,na.rm=T),median=median(isei08res,na.rm=T),min=min(isei08res,na.rm=T),max=max(isei08res,na.rm=T))
+
+dfreg$informal <- car::recode(dfreg$m10,"c(1,2)=0;3=1")
+
+table(dfreg$soclass,dfreg$informal)
+table(dfreg$soclass,dfreg$firm_size)
+
+dfreg$informal_prod<- ifelse(dfreg$firm_size>10,1,0)
+
+table(dfreg$isco08_1lvl,dfreg$informal_prod)
+
+dfreg <- dfreg %>%
+  mutate(
+    soclass3a = case_when(
+      # HIGH (3)
+      soclass %in% c("I Higher Controllers") ~ 3,
+      # MIDDLE (2)
+      soclass %in% c("IVa Self employed with employees","II Lower Controllers",
+                     "IVb Self employed with no employees",
+                     "IIIa Routine Nonmanual"                     
+                     ) ~ 2,
+      # LOW (1)
+      soclass %in% c("IVc Self employed Farmer",
+                     "IIIb Lower Sales Service",
+                     "VI Skilled Worker","V Manual Supervisors",
+                     "VIIa Unskilled Worker",
+                     "VIIb Farm Labor") ~ 1,
+      # NEET (4)
+      soclass == "NEET" ~ 4,
+      # Default
+      TRUE ~ NA_real_
+    )
+  )
+
+dfreg <- dfreg %>%
+  mutate(
+    soclass3b = case_when(
+      # GROUP 3 (HIGH)
+      soclass == "I Higher Controllers" ~ 3,
+      
+      # GROUP 2 (UPPER-MIDDLE)
+      soclass %in% c("II Lower Controllers",
+                     "IVa Self employed with employees",
+                     "IVb Self employed with no employees",
+                     "IIIa Routine Nonmanual",
+                     "V Manual Supervisors") ~ 2,
+      
+      # GROUP 1 (LOWER-MIDDLE/WORKING CLASS)
+      soclass %in% c("IVc Self employed Farmer",
+                     "IIIb Lower Sales Service",
+                     "VI Skilled Worker",
+                     "VIIa Unskilled Worker",   
+                     "VIIb Farm Labor") ~ 1,
+      
+      # GROUP 4 (NEET)
+      soclass == "NEET" ~ 4,
+      
+      TRUE ~ NA_real_
+    )
+  )
+
+polycor::polychor(dfreg$isco03_neet,dfreg$soclass3a)
+polycor::polychor(dfreg$isco03_neet,dfreg$soclass3b)
+
+table(dfreg$oesch8,dfreg$isco03_neet)
+
+frq(dfreg$oesch8)
+
+dfreg <- dfreg %>%
+  mutate(
+    oesch3a = case_when(
+      # UPPER CLASS
+      oesch8 %in% c("Self employed professionals and large employers",
+                         "(Associate) managers",
+                         "Socio cultural (semi )professionals",
+                         "Technical (semi )professionals") ~ 3,
+      
+      # INTERMEDIATE CLASS
+      oesch8 %in% c("Small business owners",
+                         "Clerks") ~ 2,
+      
+      # LOWER CLASS
+      oesch8 %in% c("Production workers",
+                         "Service workers") ~ 1,
+      
+      # NEET
+      oesch8 == "NEET" ~ 4,
+      
+      TRUE ~ NA_real_
+    ) %>%
+    sjlabelled::set_labels(labels = c("NEET" = 4,
+                          "Lower Class" = 1,
+                          "Intermediate Class" = 2,
+                          "Upper Class" = 3)) %>%
+    sjlabelled::set_label("Oesch 3-class vertical hierarchy")
+  )
+
+frq(dfreg$oesch3a)
+
+table(dfreg$oesch8,dfreg$oesch3a,useNA = "ifany")
 
 # Income -----------------------------------------------------------------------
 # Deflator
@@ -198,92 +481,6 @@ dfreg$isced11 <- factor(
 
 frq(dfreg$isced11)
 
-
-# Socioeconomic-positions classification ---------------------------------------
-table(dfreg$isco03_neet)
-dfreg$occupation<- factor(dfreg$isco03_neet,levels = c(4,1,2,3),labels = c("neet","Low","Intermediate","High"))
-table(dfreg$occupation)
-table(dfreg$educ)
-table(dfreg$quintile)
-table(dfreg$decile,dfreg$occupation)
-table(dfreg$isced11,dfreg$occupation)
-
-table(dfreg$isced11,dfreg$decile)
-frq(dfreg$isco08_1lvl)
-frq(dfreg$egp7_espinoza)
-
-frq(dfreg$egp7_espinoza)
-frq(as.numeric(dfreg$egp7_espinoza))
-
-table(dfreg$egp7_espinoza,dfreg$egp11_espinoza)
-
-
-#  1 |                I Higher Controllers |  1
-#  2 |                II Lower Controllers |  2
-#  3 |              IIIa Routine Nonmanual |  3
-#  4 |            IIIb Lower Sales-Service |  4
-#  5 |    IVa Self-employed with employees |  5
-#  6 | IVb Self-employed with no employees |  5
-#  7 |                V Manual Supervisors |  6
-#  8 |                   VI Skilled Worker |  7
-#  9 |               VIIa Unskilled Worker |  8
-# 10 |                     VIIb Farm Labor |  8
-# 11 |            IVc Self-employed Farmer |  8
-
-# 1=Working, 2=Intermediate, 3=Service, 4=Non-labor market
-
-library(car)
-
-dfreg$egp8_espinoza <- car::recode(
-  dfreg$egp11_espinoza,
-  "
-   1 = 1;   
-   2 = 2;   
-   3 = 3;   
-   4 = 4;   
-   5 = 5;   
-   6 = 5;   
-   7 = 6;   
-   8 = 7; 
-   9  = 8;  
-   10 = 8;  
-   11 = 8;  
-   else = 99
-  "
-)
-frq(dfreg$egp8_espinoza)
-frq(dfreg$m02)
-# 4 to 9 are NEET
-dfreg$egp8_espinoza <- ifelse(dfreg$egp8_espinoza==99 & dfreg$m02 %in% c(4,5,6,7,8,9),yes = 98,no = dfreg$egp8_espinoza)
-
-# Value labels for the 1–8 numeric codes
-dfreg$egp8_espinoza <- sjlabelled::set_labels(
-  dfreg$egp8_espinoza,
-  labels = c(
-    "I Higher Controllers"                             = 1,
-    "II Lower Controllers"                             = 2,
-    "IIIa Routine Nonmanual"                           = 3,
-    "IIIb Lower Sales-Service"                         = 4,
-    "IV Self-employed"        = 5,  # IVa & IVb collapsed
-    "V Manual Supervisors"                             = 6,
-    "VI Skilled Worker"                                = 7,
-    "VII Unskilled"      = 8,   # VIIa, VIIb, IVc collapsed
-    "NEET" = 98,
-    "Missing" = 99
-  ),
-  force.values = TRUE
-)
-
-frq(dfreg$egp8_espinoza)
-
-dfreg$egp4_hh <- car::recode(dfreg$egp8_espinoza,"c(98)=1;c(6,7,8)=2;c(3,4,5)=3;c(1,2)=4;99=NA",as.factor = T)
-
-frq(dfreg$egp4_hh)
-dfreg$egp4_hh <- sjlabelled::set_labels(x = dfreg$egp4_hh,labels = c("neet","working","intermid","service"))
-frq(dfreg$egp4_hh)
-tab_xtab(dfreg$egp4_hh,dfreg$egp8_espinoza)
-
-
 # Occupational socioeconomic status (individual) -------------------------------
 dfreg$isei3 <- factor(ntile(dfreg$isei08res,3)) # Categorical ISEI
 dfreg$isei3res_na <- factor(ifelse(is.na(dfreg$isei3),yes = 99,no = dfreg$isei3))
@@ -291,8 +488,6 @@ dfreg$isei_c<- car::recode(dfreg$isei08res,"NA=0") # Numeric ISEI
 
 dfreg$isei_c_groups<- car::recode(dfreg$isei_c,"0=0;16:39=1;40:59=2;60:100=3") 
 table(dfreg$isei_c_groups,dfreg$isei3res_na)
-
-
 
 # Occupational socioeconomic status (household) --------------------------------
 dfreg <- dfreg %>% sjmisc::row_means(isei08,isei08res,n = 1,var = "iseiavg",append = T)
@@ -360,9 +555,6 @@ dfreg <- dfreg %>%
   ungroup()
 dfreg$isei_cv <- (dfreg$sd_isei/dfreg$mean_isei)*100;summary(dfreg$isei_cv)
 
-
-
-
 # Network entropy---------------------------------------------------------------
 # Step 3: Compute Entropy separately
 n_vars <- c("n_doctor", "n_ceo", "n_lawyer", "n_univprof", "n_account", 
@@ -383,23 +575,23 @@ dfreg$entropy_contacts <- dfreg$entropy_contacts/log(13) # Normalize entropy (0-
 
 # Network entropy + unemployed -------------------------------------------------
 # Step 3: Compute Entropy separately
-n_vars <- c("n_doctor", "n_ceo", "n_lawyer", "n_univprof", "n_account", 
-            "n_secret", "n_shopassi", "n_kinder", "n_waiter", 
-            "n_carmech", "n_taxi", "n_stvend", "n_cleaner","n_unemploy")
-
-dfreg$n_unemploy <- as.numeric(car::recode(dfreg$r03_08,"1=0;2=1;3=3;4=6;5=9;6=13;7=17"))
-dfreg <- 
-  dfreg %>%
-  rowwise() %>%
-  mutate(
-    entropy_unemployed = {
-      p_i <- c_across(all_of(n_vars))/(total_n+n_unemploy)
-      p_i <- p_i[p_i > 0]  # Avoid log(0)
-      sum(p_i * log(p_i), na.rm = TRUE) * (-1)
-    }
-  ) %>%
-  ungroup()
-dfreg$entropy_unemployed <- dfreg$entropy_unemployed/log(14) # Normalize entropy (0-1)
+# n_vars <- c("n_doctor", "n_ceo", "n_lawyer", "n_univprof", "n_account", 
+#             "n_secret", "n_shopassi", "n_kinder", "n_waiter", 
+#             "n_carmech", "n_taxi", "n_stvend", "n_cleaner","n_unemploy")
+# 
+# dfreg$n_unemploy <- as.numeric(car::recode(dfreg$r03_08,"1=0;2=1;3=3;4=6;5=9;6=13;7=17"))
+# dfreg <- 
+#   dfreg %>%
+#   rowwise() %>%
+#   mutate(
+#     entropy_unemployed = {
+#       p_i <- c_across(all_of(n_vars))/(total_n+n_unemploy)
+#       p_i <- p_i[p_i > 0]  # Avoid log(0)
+#       sum(p_i * log(p_i), na.rm = TRUE) * (-1)
+#     }
+#   ) %>%
+#   ungroup()
+# dfreg$entropy_unemployed <- dfreg$entropy_unemployed/log(14) # Normalize entropy (0-1)
 
 # Market justice preference index ----------------------------------------------
 dfreg$market<- rowMeans(dfreg[,c("just_educ","just_salud","just_pension")],na.rm = T)
@@ -548,6 +740,7 @@ dfreg %>%
   # filter(!(isei3res_na == 99 & m02 %in% c(1,2,3))) %>% # Those who have occupation are in the labor market, and those who does not have ISCO are the outsiders (houselabor, retired, students).
   filter(muestra==1 & idencuesta!=3577497540) %>%
   select(id="idencuesta",ola,muestra,
+         atricion=tipo_atricion,
          entropy_contacts,
          sd_isei,iqvclass,crossclass,isei_range,
          scaleup1,scaleup2,scaleup3,
@@ -569,12 +762,16 @@ dfreg %>%
          isei_c_groups,
          isco03_neet,
          isco03b_neet,
+         isco03c_neet,
+         isco_father,isco08_1lvl,self_employed_r_fix,
+         soclass,soclass3a,soclass3b,oesch8,oesch3a,
          # isco03ine_neet,
          # egp4_hh,
          # sesclass,
          age=m0_edad,
          sex=sexo_fx,
-         migrationw1,parenteducw1,
+         migrationw1,parenteducw1,strong_tie,
+         partner,
          m02,
          weights1=ponderador_long_total,
          ponderador02,
@@ -587,9 +784,7 @@ dfreg %>%
          time = as.numeric(ola));dim((na.omit(df1)))
 
 # Mobility profiles (individual by ISCO08) -----------------------------------------------
-frq(df1$isco03_neet)
-
-df1$mobility <- car::recode(df1$isco03_neet,"c(4,NA)=0")
+{df1$mobility <- car::recode(df1$isco03_neet,"c(4,NA)=0")
 df1$mobility <- as.numeric(df1$mobility)+1
 df1 <- 
 df1 %>%
@@ -666,10 +861,10 @@ isei_mobility$mobility_cat_adj[isei_mobility$toStHig==1] <-"Stable: high"
 isei_mobility_isco <- isei_mobility
 isei_mobility_isco <- isei_mobility_isco %>% rename(mobility_cat_adj_isco3=mobility_cat_adj)
 frq(isei_mobility_isco$mobility_cat_adj_isco3)
+}
 
 # Mobility profiles (individual by ISCO08 Alternative B) -----------------------
-frq(df1$isco03b_neet)
-
+{frq(df1$isco03b_neet)
 df1$mobility <- car::recode(df1$isco03b_neet,"c(4,NA)=0")
 df1$mobility <- as.numeric(df1$mobility)+1
 df1 <- 
@@ -747,6 +942,252 @@ isei_mobility$mobility_cat_adj[isei_mobility$toStHig==1] <-"Stable: high"
 isei_mobility_iscob <- isei_mobility
 isei_mobility_iscob <- isei_mobility_iscob %>% rename(mobility_cat_adj_isco3b=mobility_cat_adj)
 frq(isei_mobility_iscob$mobility_cat_adj_isco3b)
+}
+
+# Mobility profiles (individual by ISCO08 Alternative B) -----------------------
+{frq(df1$isco03c_neet)
+df1$mobility <- car::recode(df1$isco03c_neet,"c(4,NA)=0")
+df1$mobility <- as.numeric(df1$mobility)+1
+df1 <- 
+df1 %>%
+  group_by(id) %>%
+  mutate(
+    n_obs   = n(),                                # total waves per person
+    n_mob1  = sum(mobility == 1, na.rm = TRUE),   # how many of those waves have mobility==1
+    n_mob2  = sum(mobility == 2, na.rm = TRUE),   # how many of those waves have mobility==2
+    n_mob3  = sum(mobility == 3, na.rm = TRUE),   # how many of those waves have mobility==3
+    n_mob4  = sum(mobility == 4, na.rm = TRUE),   # how many of those waves have mobility==4    
+    prop_mob1 = n_mob1 / n_obs,                   # optional: the share of waves in mobility==1
+    prop_mob2 = n_mob2 / n_obs,                   # optional: the share of waves in mobility==2
+    prop_mob3 = n_mob3 / n_obs,                   # optional: the share of waves in mobility==3
+    prop_mob4 = n_mob4 / n_obs,                   # optional: the share of waves in mobility==4    
+  ) %>%
+  ungroup()
+
+mobility_proportion <- df1 %>% select(id,mobility,n_obs,n_mob1,prop_mob1,n_mob2,prop_mob2,n_mob3,prop_mob3,n_mob4,prop_mob4) %>% arrange(id)
+# NEET =  not in employment, education or training
+# Source: https://www.oecd.org/en/data/indicators/youth-not-in-employment-education-or-training-neet.html
+{isei_mobility <- df1 %>%
+  arrange(id, time) %>%
+  group_by(id) %>%
+  summarise(
+    isei_first = first(mobility[!is.na(mobility)]),
+    isei_last  = last(mobility[!is.na(mobility)]),
+    isei_mode  = mode(mobility[!is.na(mobility)]),
+    n_obs=mean(n_obs),
+    prop_mob1= mean(prop_mob1),
+    prop_mob2= mean(prop_mob2),
+    prop_mob3= mean(prop_mob3),
+    prop_mob4= mean(prop_mob4),
+  ) %>%
+  mutate(
+    mobility_cat = case_when(
+      isei_first == 1 & isei_last == 1 ~ "Stable: NEET",
+      isei_first == 2 & isei_last == 2 ~ "Stable: low",
+      isei_first == 3 & isei_last == 3 ~ "Stable: middle",
+      isei_first == 4 & isei_last == 4 ~ "Stable: high",
+      isei_first == 2 & isei_last == 3 ~ "Upward (L to M)",
+      isei_first == 3 & isei_last == 4 ~ "Upward (M to H)",
+      isei_first == 2 & isei_last == 4 ~ "Upward (L to H)",
+      isei_first == 1 & isei_last %in% c(4,3,2) ~ "Upward (NEET to Any)",            
+      isei_first == 4 & isei_last == 3 ~ "Downward (H to M)",
+      isei_first == 4 & isei_last == 2 ~ "Downward (H to L)",
+      isei_first == 3 & isei_last == 2 ~ "Downward (M to L)",
+      isei_first %in% c(4,3,2) & isei_last == 1 ~ "Downward (Any to NEET)",      
+      TRUE                             ~ NA_character_
+    )
+  ) %>%
+  mutate(mobility_cat = factor(
+    mobility_cat,
+  )) %>% 
+ arrange(-n_obs)
+}
+frq(isei_mobility$mobility_cat)
+table(isei_mobility$mobility_cat,isei_mobility$n_obs)
+mobility_categories<- c("Downward (Any to NEET)","Downward (H to L)","Downward (H to M)","Downward (M to L)",
+  "Upward (L - H)","Upward (L - M)","Upward (M - H)","Upward (NEET to Any)")  
+# Individuals with more than 75% of the time in NEET, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+isei_mobility$toNEET <- ifelse(isei_mobility$prop_mob1 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# Individuals with more than 75% of the time in Low, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+isei_mobility$toStLow <- ifelse(isei_mobility$prop_mob2 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# Individuals with more than 75% of the time in Middle, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+isei_mobility$toStMid <- ifelse(isei_mobility$prop_mob3 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# Individuals with more than 75% of the time in High, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+isei_mobility$toStHig <- ifelse(isei_mobility$prop_mob4 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+isei_mobility$mobility_cat_adj <- isei_mobility$mobility_cat
+isei_mobility$mobility_cat_adj[isei_mobility$toNEET==1] <- "Stable: NEET"
+isei_mobility$mobility_cat_adj[isei_mobility$toStLow==1] <-"Stable: low"
+isei_mobility$mobility_cat_adj[isei_mobility$toStMid==1] <-"Stable: middle" 
+isei_mobility$mobility_cat_adj[isei_mobility$toStHig==1] <-"Stable: high" 
+
+isei_mobility_iscoc <- isei_mobility
+isei_mobility_iscoc <- isei_mobility_iscoc %>% rename(mobility_cat_adj_isco3c=mobility_cat_adj)
+frq(isei_mobility_iscoc$mobility_cat_adj_isco3b)
+}
+
+
+# # Mobility profiles (individual by EGP 3 Alternative A) -----------------------
+# {frq(df1$soclass3a)
+# df1$mobility <- car::recode(df1$soclass3a,"c(4,NA)=0")  
+# df1$mobility <- as.numeric(df1$mobility)+1
+# df1 <- 
+# df1 %>%
+#   group_by(id) %>%
+#   mutate(
+#     n_obs   = n(),                                # total waves per person
+#     n_mob1  = sum(mobility == 1, na.rm = TRUE),   # how many of those waves have mobility==1
+#     n_mob2  = sum(mobility == 2, na.rm = TRUE),   # how many of those waves have mobility==2
+#     n_mob3  = sum(mobility == 3, na.rm = TRUE),   # how many of those waves have mobility==3
+#     n_mob4  = sum(mobility == 4, na.rm = TRUE),   # how many of those waves have mobility==4    
+#     prop_mob1 = n_mob1 / n_obs,                   # optional: the share of waves in mobility==1
+#     prop_mob2 = n_mob2 / n_obs,                   # optional: the share of waves in mobility==2
+#     prop_mob3 = n_mob3 / n_obs,                   # optional: the share of waves in mobility==3
+#     prop_mob4 = n_mob4 / n_obs,                   # optional: the share of waves in mobility==4    
+#   ) %>%
+#   ungroup()
+# 
+# mobility_proportion <- df1 %>% select(id,mobility,n_obs,n_mob1,prop_mob1,n_mob2,prop_mob2,n_mob3,prop_mob3,n_mob4,prop_mob4) %>% arrange(id)
+# # NEET =  not in employment, education or training
+# # Source: https://www.oecd.org/en/data/indicators/youth-not-in-employment-education-or-training-neet.html
+# {isei_mobility <- df1 %>%
+#   arrange(id, time) %>%
+#   group_by(id) %>%
+#   summarise(
+#     isei_first = first(mobility[!is.na(mobility)]),
+#     isei_last  = last(mobility[!is.na(mobility)]),
+#     isei_mode  = mode(mobility[!is.na(mobility)]),
+#     n_obs=mean(n_obs),
+#     prop_mob1= mean(prop_mob1),
+#     prop_mob2= mean(prop_mob2),
+#     prop_mob3= mean(prop_mob3),
+#     prop_mob4= mean(prop_mob4),
+#   ) %>%
+#   mutate(
+#     mobility_cat = case_when(
+#       isei_first == 1 & isei_last == 1 ~ "Stable: NEET",
+#       isei_first == 2 & isei_last == 2 ~ "Stable: low",
+#       isei_first == 3 & isei_last == 3 ~ "Stable: middle",
+#       isei_first == 4 & isei_last == 4 ~ "Stable: high",
+#       isei_first == 2 & isei_last == 3 ~ "Upward (L to M)",
+#       isei_first == 3 & isei_last == 4 ~ "Upward (M to H)",
+#       isei_first == 2 & isei_last == 4 ~ "Upward (L to H)",
+#       isei_first == 1 & isei_last %in% c(4,3,2) ~ "Upward (NEET to Any)",            
+#       isei_first == 4 & isei_last == 3 ~ "Downward (H to M)",
+#       isei_first == 4 & isei_last == 2 ~ "Downward (H to L)",
+#       isei_first == 3 & isei_last == 2 ~ "Downward (M to L)",
+#       isei_first %in% c(4,3,2) & isei_last == 1 ~ "Downward (Any to NEET)",      
+#       TRUE                             ~ NA_character_
+#     )
+#   ) %>%
+#   mutate(mobility_cat = factor(
+#     mobility_cat,
+#   )) %>% 
+#  arrange(-n_obs)
+# }
+# frq(isei_mobility$mobility_cat)
+# table(isei_mobility$mobility_cat,isei_mobility$n_obs)
+# mobility_categories<- c("Downward (Any to NEET)","Downward (H to L)","Downward (H to M)","Downward (M to L)",
+#   "Upward (L - H)","Upward (L - M)","Upward (M - H)","Upward (NEET to Any)")  
+# # Individuals with more than 75% of the time in NEET, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+# isei_mobility$toNEET <- ifelse(isei_mobility$prop_mob1 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# # Individuals with more than 75% of the time in Low, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+# isei_mobility$toStLow <- ifelse(isei_mobility$prop_mob2 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# # Individuals with more than 75% of the time in Middle, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+# isei_mobility$toStMid <- ifelse(isei_mobility$prop_mob3 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# # Individuals with more than 75% of the time in High, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+# isei_mobility$toStHig <- ifelse(isei_mobility$prop_mob4 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# isei_mobility$mobility_cat_adj <- isei_mobility$mobility_cat
+# isei_mobility$mobility_cat_adj[isei_mobility$toNEET==1] <- "Stable: NEET"
+# isei_mobility$mobility_cat_adj[isei_mobility$toStLow==1] <-"Stable: low"
+# isei_mobility$mobility_cat_adj[isei_mobility$toStMid==1] <-"Stable: middle" 
+# isei_mobility$mobility_cat_adj[isei_mobility$toStHig==1] <-"Stable: high" 
+# 
+# isei_mobility_egp3a <- isei_mobility
+# isei_mobility_egp3a <- isei_mobility_egp3a %>% rename(mobility_cat_adj_egp3a=mobility_cat_adj)
+# frq(isei_mobility_egp3a$mobility_cat_adj_egp3a)
+# }
+# # Mobility profiles (individual by EGP 3 Alternative B) -----------------------
+# {frq(df1$soclass3b)
+# df1$mobility <- car::recode(df1$soclass3b,"c(4,NA)=0")  
+# df1$mobility <- as.numeric(df1$mobility)+1
+# 
+# df1 <- 
+# df1 %>%
+#   group_by(id) %>%
+#   mutate(
+#     n_obs   = n(),                                # total waves per person
+#     n_mob1  = sum(mobility == 1, na.rm = TRUE),   # how many of those waves have mobility==1
+#     n_mob2  = sum(mobility == 2, na.rm = TRUE),   # how many of those waves have mobility==2
+#     n_mob3  = sum(mobility == 3, na.rm = TRUE),   # how many of those waves have mobility==3
+#     n_mob4  = sum(mobility == 4, na.rm = TRUE),   # how many of those waves have mobility==4    
+#     prop_mob1 = n_mob1 / n_obs,                   # optional: the share of waves in mobility==1
+#     prop_mob2 = n_mob2 / n_obs,                   # optional: the share of waves in mobility==2
+#     prop_mob3 = n_mob3 / n_obs,                   # optional: the share of waves in mobility==3
+#     prop_mob4 = n_mob4 / n_obs,                   # optional: the share of waves in mobility==4    
+#   ) %>%
+#   ungroup()
+# 
+# mobility_proportion <- df1 %>% select(id,mobility,n_obs,n_mob1,prop_mob1,n_mob2,prop_mob2,n_mob3,prop_mob3,n_mob4,prop_mob4) %>% arrange(id)
+# # NEET =  not in employment, education or training
+# # Source: https://www.oecd.org/en/data/indicators/youth-not-in-employment-education-or-training-neet.html
+# {isei_mobility <- df1 %>%
+#   arrange(id, time) %>%
+#   group_by(id) %>%
+#   summarise(
+#     isei_first = first(mobility[!is.na(mobility)]),
+#     isei_last  = last(mobility[!is.na(mobility)]),
+#     isei_mode  = mode(mobility[!is.na(mobility)]),
+#     n_obs=mean(n_obs),
+#     prop_mob1= mean(prop_mob1),
+#     prop_mob2= mean(prop_mob2),
+#     prop_mob3= mean(prop_mob3),
+#     prop_mob4= mean(prop_mob4),
+#   ) %>%
+#   mutate(
+#     mobility_cat = case_when(
+#       isei_first == 1 & isei_last == 1 ~ "Stable: NEET",
+#       isei_first == 2 & isei_last == 2 ~ "Stable: low",
+#       isei_first == 3 & isei_last == 3 ~ "Stable: middle",
+#       isei_first == 4 & isei_last == 4 ~ "Stable: high",
+#       isei_first == 2 & isei_last == 3 ~ "Upward (L to M)",
+#       isei_first == 3 & isei_last == 4 ~ "Upward (M to H)",
+#       isei_first == 2 & isei_last == 4 ~ "Upward (L to H)",
+#       isei_first == 1 & isei_last %in% c(4,3,2) ~ "Upward (NEET to Any)",            
+#       isei_first == 4 & isei_last == 3 ~ "Downward (H to M)",
+#       isei_first == 4 & isei_last == 2 ~ "Downward (H to L)",
+#       isei_first == 3 & isei_last == 2 ~ "Downward (M to L)",
+#       isei_first %in% c(4,3,2) & isei_last == 1 ~ "Downward (Any to NEET)",      
+#       TRUE                             ~ NA_character_
+#     )
+#   ) %>%
+#   mutate(mobility_cat = factor(
+#     mobility_cat,
+#   )) %>% 
+#  arrange(-n_obs)
+# }
+# frq(isei_mobility$mobility_cat)
+# table(isei_mobility$mobility_cat,isei_mobility$n_obs)
+# mobility_categories<- c("Downward (Any to NEET)","Downward (H to L)","Downward (H to M)","Downward (M to L)",
+#   "Upward (L - H)","Upward (L - M)","Upward (M - H)","Upward (NEET to Any)")  
+# # Individuals with more than 75% of the time in NEET, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+# isei_mobility$toNEET <- ifelse(isei_mobility$prop_mob1 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# # Individuals with more than 75% of the time in Low, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+# isei_mobility$toStLow <- ifelse(isei_mobility$prop_mob2 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# # Individuals with more than 75% of the time in Middle, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+# isei_mobility$toStMid <- ifelse(isei_mobility$prop_mob3 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# # Individuals with more than 75% of the time in High, have at least 3 observations and are wrongly classified as Downward or Upward mobility.
+# isei_mobility$toStHig <- ifelse(isei_mobility$prop_mob4 >=0.75 & isei_mobility$n_obs>=3 & isei_mobility$mobility_cat %in% mobility_categories,1,0)
+# isei_mobility$mobility_cat_adj <- isei_mobility$mobility_cat
+# isei_mobility$mobility_cat_adj[isei_mobility$toNEET==1] <- "Stable: NEET"
+# isei_mobility$mobility_cat_adj[isei_mobility$toStLow==1] <-"Stable: low"
+# isei_mobility$mobility_cat_adj[isei_mobility$toStMid==1] <-"Stable: middle" 
+# isei_mobility$mobility_cat_adj[isei_mobility$toStHig==1] <-"Stable: high" 
+# 
+# isei_mobility_egp3b <- isei_mobility
+# isei_mobility_egp3b <- isei_mobility_egp3b %>% rename(mobility_cat_adj_egp3b=mobility_cat_adj)
+# frq(isei_mobility_egp3b$mobility_cat_adj_egp3b)
+# }
+
 
 # Prepare final dataset---------------------------------------------------------
 df1 <-  df1 %>%
@@ -756,6 +1197,18 @@ df1 <-  df1 %>%
 df1 <-  df1 %>%
   left_join(isei_mobility_iscob %>% select(id,mobility_cat_adj_isco3b), by = "id") 
   # filter(!(isei == 99 & m02 %in% c(1,2,3)))
+
+df1 <-  df1 %>%
+  left_join(isei_mobility_iscoc %>% select(id,mobility_cat_adj_isco3c), by = "id") 
+  # filter(!(isei == 99 & m02 %in% c(1,2,3)))
+
+# df1 <-  df1 %>%
+#   left_join(isei_mobility_egp3a %>% select(id,mobility_cat_adj_egp3a), by = "id") 
+#   # filter(!(isei == 99 & m02 %in% c(1,2,3)))
+# 
+# df1 <-  df1 %>%
+#   left_join(isei_mobility_egp3b %>% select(id,mobility_cat_adj_egp3b), by = "id") 
+#   # filter(!(isei == 99 & m02 %in% c(1,2,3)))
 
 dim((na.omit(df1)))
 
@@ -775,17 +1228,24 @@ pacman::p_load(dplyr, tidyr, purrr, sjmisc, lme4, plm, panelr, estimatr, ordinal
 load(file = here::here("input/data/proc/df1_panel_v2.RData"));paneldata137 <- paneldata
 load(file = here::here("input/data/proc/df1_panel_for_mice.RData")); paneldata <- df1 
 
-paneldata137 <- paneldata137 %>% group_by(id) %>% mutate(n_obs=n())
-
+militares<- paneldata137 %>% filter(isco08_1lvl=="0000")
 # Select variables for analysis
 paneldata137 <- paneldata137 %>% 
-  select(id,time,market,just_educ,just_salud,just_pension,n_total,isei_avg,entropy_contacts,know_total,sex,age,mobility_cat_adj_isco3,isco03_neet,migrationw1,parenteducw1,ponderador02,weights1) %>% na.omit()
+  filter(!id %in% militares$id) %>%
+  select(id,time,market,just_educ,just_salud,just_pension,n_total,isei_avg,entropy_contacts,know_total,crossclass,sex,age,
+         soclass,soclass3a,soclass3b,
+         strong_tie,
+         mobility_cat_adj_isco3,mobility_cat_adj_isco3b,mobility_cat_adj_isco3c,isco03_neet,migrationw1,parenteducw1,isco_father,partner,ponderador02,weights1,atricion) %>% 
+  
+  na.omit()
 # Network diversity for longitudinal analysis
+select(data.frame(paneldata137),"entropy_contacts","know_total","crossclass") %>% correlation::correlation()
+
 pca_fit_v10 <- 
   psych::principal(r = as.data.frame(paneldata137) %>% 
-                     select("entropy_contacts","know_total"),
+                     select("entropy_contacts","know_total","crossclass"),
                    nfactors = 1,rotate = "varimax",scores = T,missing = T, 
-                   cor = "cor",weight = paneldata137$weights1)
+                   cor = "cor")
 paneldata137$diversityclass <- as.numeric(pca_fit_v10$scores)
 
 paneldata137$mobility_profile <-car::recode(
@@ -799,24 +1259,22 @@ paneldata137$mobility_profile <-car::recode(
     'Upward (M to H)',
     'Upward (NEET to Any)') = 'Upward'
   "
-)
+);paneldata137$mobility_profile <- relevel(paneldata137$mobility_profile,ref = "Stable: low")
 
 paneldata137$parenteducw1 <- factor(paneldata137$parenteducw1,ordered = F)
 paneldata137$migrationw1 <- factor(paneldata137$migrationw1,ordered = F)
-paneldata137$mobility_profile <- relevel(paneldata137$mobility_profile,ref = "Stable: low")
-paneldata137$time<- car::recode(paneldata137$time,recodes = "3=2;7=3",as.factor = T)
+
+paneldata137$time<- car::recode(paneldata137$time,recodes = "3=2;7=3")
+paneldata137 <- paneldata137 %>% group_by(id) %>% mutate(n_obs=n())
 
 normalize <- function(x) {
   return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
 }
 
 paneldata137$know_total_norm<- normalize(paneldata137$know_total)
-
-paneldata137$diversitynml<- as.numeric((paneldata137$know_total_norm+paneldata137$entropy_contacts)/2)
-
-as.data.frame(paneldata137)%>% 
-  select(entropy_contacts,know_total,diversityclass,diversitynml) %>% 
-  correlation::correlation() %>% summary(digits=3)
+paneldata137$crossclass_norm<- normalize(paneldata137$crossclass)
+paneldata137$diversitynml<- as.numeric((paneldata137$know_total_norm+paneldata137$entropy_contacts+paneldata137$crossclass_norm)/3)
+summary(paneldata137$diversitynml)
 ```
 
 ## 1. DESCRIPTIVES
@@ -851,16 +1309,16 @@ ggplot() +
   geom_hline(yintercept = weighted.mean(paneldata137$market,na.rm=T,w=paneldata137$ponderador02) ,linetype=2,size=1,alpha=0.5,color='gray')+
   geom_ribbon(data=predicted_linear_time,aes(y = estimate,x = tiempo,ymin = conf.low,ymax = conf.high),alpha=0.3, color = "black",fill="white",linetype = 3, linewidth=0.5) + 
   geom_line(data=predicted_linear_time,aes(y = estimate,x = tiempo),size = 1, color = "black",alpha=0.2)  +
-  geom_errorbar(data=predicted_factor_time,aes(y = estimate,x = time,ymin = conf.low,ymax = conf.high),
+  geom_errorbar(data=predicted_factor_time,aes(y = estimate,x = factor(time),ymin = conf.low,ymax = conf.high),
                 color = "black",width=0.02) + 
-  geom_point(data = predicted_factor_time,aes(y = estimate,x = time),
+  geom_point(data = predicted_factor_time,aes(y = estimate,x = factor(time)),
              size = 1.5, color = "black") + 
-  geom_line(data = predicted_factor_time,aes(y = estimate,x = time,group=1),
+  geom_line(data = predicted_factor_time,aes(y = estimate,x = factor(time),group=1),
              size = 0.5, color = "black",linetype=2) +
   scale_y_continuous(name=NULL,limits = c(1,3),n.breaks = 9,
                      labels=c("Strongly\ndisagree","","","","Disagree","","","","Neither agree\nnor disagree"),
                      sec.axis =sec_axis(~ .))+
-  scale_x_discrete(name=NULL,labels=c("Time 1 (2016)","Time 2 (2018)","Time 3 (2023)"),expand = expansion(add = 0.1)) +
+  scale_x_discrete(name=NULL,labels=c("Time 1\n(2016)","Time 2\n(2018)","Time 3\n(2023)"),expand = expansion(add = 0.1)) +
   # labs(caption = paste0("*Note*: The dashed line represents the sample mean for the three periods. The line corresponds to the linear trend with 95% CIs. Weighted estimates. *N* = ",format(dim(paneldata137)[1], big.mark = ","))) +
   labs(title = "Market justice preferences")+
   theme(
@@ -894,7 +1352,6 @@ options(ggplot2.discrete.fill = set1)
 options(ggplot2.discrete.colour = set1)
 ggplot2::theme_set(ggplot2::theme_bw())
 ggplot2::theme_update(text=ggplot2::element_text(size=15,  family="serif"))
-# install.packages("estimatr")
 
 trend_diversity <-lm(diversityclass ~ factor(time),
                       data = as.data.frame(paneldata137),
@@ -905,7 +1362,6 @@ paneldata137$tiempo<- as.numeric(paneldata137$time)
 trend_diversity_linear <- lm(diversityclass ~ tiempo,
                       data = as.data.frame(paneldata137),
                       weights = ponderador02) 
-# or "stata"/"HC1"/"HC2"/"HC3"
 predicted_linear_time<- 
 predictions(trend_diversity_linear,condition = c("tiempo"),
                  newdata = datagrid(tiempo=seq(1,3,by=0.1)))
@@ -915,14 +1371,14 @@ ggplot() +
   geom_hline(yintercept = mean(paneldata137$diversityclass,na.rm=T,w=paneldata137$ponderador02) ,linetype=2,size=1,alpha=0.5,color='gray')+
   geom_ribbon(data=predicted_linear_time,aes(y = estimate,x = tiempo,ymin = conf.low,ymax = conf.high),alpha=0.3, color = "black",fill="white",linetype = 3, linewidth=0.5) + 
   geom_line(data=predicted_linear_time,aes(y = estimate,x = tiempo),size = 1, color = "black",alpha=0.2)  +
-  geom_errorbar(data=predicted_factor_time,aes(y = estimate,x = time,ymin = conf.low,ymax = conf.high),
+  geom_errorbar(data=predicted_factor_time,aes(y = estimate,x = factor(time),ymin = conf.low,ymax = conf.high),
                 color = "black",width=0.02) + 
-  geom_point(data = predicted_factor_time,aes(y = estimate,x = time),
+  geom_point(data = predicted_factor_time,aes(y = estimate,x = factor(time)),
              size = 1.5, color = "black") + 
-  geom_line(data = predicted_factor_time,aes(y = estimate,x = time,group=1),
+  geom_line(data = predicted_factor_time,aes(y = estimate,x = factor(time),group=1),
              size = 0.5, color = "black",linetype=2) +
   scale_y_continuous(name = NULL,limits = c(-0.75,0.75))+
-  scale_x_discrete(name=NULL,labels=c("Time 1 (2016)","Time 2 (2018)","Time 3 (2023)"),expand = expansion(add = 0.1)) +
+  scale_x_discrete(name=NULL,labels=c("Time 1\n(2016)","Time 2\n(2018)","Time 3\n(2023)"),expand = expansion(add = 0.1)) +
   # labs(caption = paste0("*Note*: The dashed line represents the sample mean for the three periods. The red line corresponds to the linear trend with 95% CIs. Weighted estimates. *N* = ",format(dim(paneldata137)[1], big.mark = ","))) +
   labs(title = "Network diversity") +
   theme(
@@ -945,7 +1401,6 @@ ggplot() +
 
 ```{r}
 library(patchwork)
-
 plot_trend_market + plot_trend_diversity +plot_annotation(caption = paste0("Note: The dashed line represents the sample mean for the three periods. The gray line corresponds to the linear trend with 95% CIs. Weighted estimates. N = ",format(dim(paneldata137)[1], big.mark = ",")))  +
   theme(
     panel.grid.minor = element_blank(),
@@ -966,30 +1421,238 @@ ggsave(
 ) 
 ```
 
+###  Occupations over time 
+
+```{r mobility}
+set1 <-  RColorBrewer::brewer.pal(n = 8, name = "Set1")
+options(ggplot2.discrete.fill = set1)
+options(ggplot2.discrete.colour = set1)
+ggplot2::theme_set(ggplot2::theme_bw())
+ggplot2::theme_update(text=ggplot2::element_text(size=15,  family="serif"))
+# isco03_neet is occupation
+# id is individual identification
+# time is the wave of individual
+paneldata137 # is the data frame
+
+# please build a sankey plot to observe the transitions here from each occupational group
+
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+library(ggalluvial)
+
+datos.occupations <- as.data.frame(paneldata137) %>% 
+  # filter(n_obs==3) %>% 
+  mutate(occupation = factor(isco03_neet,c(1,2,3,4),labels = c("High","Intermediate", 'Low','NEET'))) %>% 
+  group_by(id, time) %>% 
+  count(occupation) %>% 
+  group_by(time) %>% 
+  mutate(porcentaje=n/sum(n)) %>% 
+  ungroup() %>% 
+  # filter(n_obs==3) %>% 
+  na.omit() %>%
+  mutate(time = case_when(time == 1 ~ "2016",
+                          time == 2 ~ "2018",
+                          time == 3 ~ "2023"),
+         time = factor(time, levels = c("2016",
+                                      "2018",
+                                      "2023")))
+
+
+etiquetas.health <- as.data.frame(paneldata137) %>%
+  mutate(occupation = factor(isco03_neet,c(1,2,3,4),labels = c("High","Intermediate", 'Low','NEET'))) %>% 
+  group_by(time, occupation) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(time) %>%
+  mutate(porcentaje1 = count / sum(count)) %>% 
+  na.omit() %>% 
+  mutate(time = case_when(time == 1 ~ "2016",
+                          time == 2 ~ "2018",
+                          time == 3 ~ "2023"),
+         time = factor(time, levels = c("2016",
+                                        "2018",
+                                        "2023"))) %>% arrange(time,occupation)
+
+datos.occupations<- left_join(datos.occupations,etiquetas.health,by=c("time",'occupation')) 
+
+# Create a summary dataset with unique combinations of time, occupation, and percentage
+label_data <- datos.occupations %>%
+  group_by(time, occupation) %>%
+  summarise(porcentaje_label = first(porcentaje1), .groups = 'drop')  # Get the unique percentage for each group
+
+
+datos.occupations %>% 
+  ggplot(aes(x = time, fill = occupation, stratum = occupation,
+             alluvium = id, y = porcentaje)) +
+  geom_flow(alpha = .4) + 
+  geom_stratum(linetype = 0) +
+  scale_y_continuous(labels = scales::percent) + 
+  scale_fill_manual(values =  c("#0571B0","black","#CA0020","#b3b3b3ff")) +
+  # Add labels using the summary dataset
+  geom_text(data = label_data,
+            aes(x = time,
+                y = porcentaje_label,
+                label = scales::percent(porcentaje_label, accuracy = 0.1),
+                group = occupation),
+            position = position_stack(vjust = 0.5),
+            color = "white",
+            size = 3,
+            inherit.aes = FALSE) +
+  labs(y = NULL,
+       x = NULL,
+       fill = NULL,
+       title = "Changes in occupation") +
+  theme(legend.position = "right")
+
+```
+
+
 ## 2. MODELS: Regression fixed, random and multilevel
 
-```{r table001}
-# paneldata137$diversityclass <- paneldata137$diversitynml
+```{r compare-schemas}
+compare_classschemes <- list(
+plm(market~factor(soclass)+factor(time)+sex+age,data=paneldata,model = "pooling",weights = weights1),
+plm(market~factor(soclass3a)+factor(time)+sex+age,data=paneldata,model = "pooling",weights = weights1),
+plm(market~factor(soclass3b)+factor(time)+sex+age,data=paneldata,model = "pooling",weights = weights1),
 
+plm(market~factor(oesch8)+factor(time)+sex+age,data=paneldata,model = "pooling",weights = weights1),
+plm(market~factor(oesch3a)+factor(time)+sex+age,data=paneldata,model = "pooling",weights = weights1),
+
+plm(market~factor(isco03_neet)+factor(time)+sex+age,data=paneldata,model = "pooling",weights = weights1),
+plm(market~factor(isco03b_neet)+factor(time)+sex+age,data=paneldata,model = "pooling",weights = weights1)
+)
+
+screenreg(compare_classschemes,digits = 3)
+```
+
+
+```{r table001}
+# paneldata137$diversityclass<- scale(paneldata137$diversitynml)
+paneldata137$mobility_profile <-car::recode(
+  paneldata137$mobility_cat_adj_isco3,
+  "c('Downward (Any to NEET)',
+    'Downward (H to L)',
+    'Downward (H to M)',
+    'Downward (M to L)') = 'Downward';
+  c('Upward (L to H)',
+    'Upward (L to M)',
+    'Upward (M to H)',
+    'Upward (NEET to Any)') = 'Upward'
+  "
+);paneldata137$mobility_profile <- relevel(paneldata137$mobility_profile,ref = "Stable: low")
+
+table(paneldata137$n_obs)
 paneldata137$market1 <- as.numeric(scale(paneldata137$market)) 
 paneldata137$diversityclass_gm<- MLMusingR::group_mean(paneldata137$diversityclass,grp = paneldata137$id)
 paneldata137$diversityclass_gc<- paneldata137$diversityclass - paneldata137$diversityclass_gm
 paneldata137$time<- factor(paneldata137$time)
 
-market_mob_FE<- plm(market1~diversityclass+time,data=paneldata137,weights = weights1,model = "within")
-market_mob_FEnw<- plm(market1~diversityclass+time,data=paneldata137,model = "within")
+market_mob_FE<- plm(market1~diversityclass+time+partner,data=paneldata137,weights = weights1,model = "within")
+market_mob_FEnw<- plm(market1~diversityclass+time+partner,data=paneldata137,model = "within")
 
-market_mob_RE1<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1, data=paneldata137,weights = weights1,model = "random")
-market_mob_RE1nw<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1, data=paneldata137,weights = NULL,model = "random")
+market_mob_RE1<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1+partner, data=paneldata137,weights = weights1,model = "random")
+market_mob_RE1nw<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1+partner, data=paneldata137,weights = NULL,model = "random")
 
-m2 <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+time+(1|id),data = paneldata137,weights = weights1)
-m2nw <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+time+(1|id),data = paneldata137,weights = NULL)
-m3 <- lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+time+(1|id),data = paneldata137,weights = weights1)
-m3nw <- lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+time+(1|id),data = paneldata137,weights = NULL)
+m2 <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = weights1)
+m2nw <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = NULL)
+m3 <- lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = weights1)
+m3nw <- lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = NULL)
 
 unweight <- list(market_mob_FEnw,market_mob_RE1nw,m2nw,m3nw)
 
-plot_slopes(m3, variables = "diversityclass_gc", condition = c("mobility_profile"),draw = F)
+var_labels <- list(
+  diversityclass = "Network Diversity",
+  diversityclass_gc = "Network Diversity",
+  n_total = "Network Size",  
+  # "mobility_profileStable: NEET" = "Stable: NEET (ref.=Stable: Low)",
+  "mobility_profileStable: high" = "Stable: high (ref.=Stable: Low)",
+  "mobility_profileStable: middle" = "Stable: middle",
+  "mobility_profileDownward" = "Downward",
+  "mobility_profileUpward" = "Upward",
+  "`mobility_profileStable: NEET`" = "Stable: NEET (ref.=Stable: Low)",
+  "`mobility_profileStable: high`" = "Stable: high",
+  "`mobility_profileStable: middle`" = "Stable: middle",
+  "`mobility_profileDownward`" = "Downward",
+  "`mobility_profileUpward`" = "Upward",
+  "diversityclass:mobility_profileStable: NEET" = "Diversity × Stable: NEET",
+  "diversityclass:mobility_profileStable: high" = "Diversity × Stable: high",
+  "diversityclass:mobility_profileStable: middle" = "Diversity × Stable: middle",  
+  "diversityclass:mobility_profileDownward" = "Diversity × Downward",
+  "diversityclass:mobility_profileUpward" = "Diversity × Upward",
+  # "diversityclass_gc:mobility_profileStable: NEET" = "Diversity × Stable: NEET",
+  "diversityclass_gc:mobility_profileStable: high" = "Diversity × Stable: high",
+  "diversityclass_gc:mobility_profileStable: middle" = "Diversity × Stable: middle",  
+  "diversityclass_gc:mobility_profileDownward" = "Diversity × Downward",
+  "diversityclass_gc:mobility_profileUpward" = "Diversity × Upward",
+  "`diversityclass:mobility_profileStable: NEET`" = "Diversity × Stable: NEET",
+  "`diversityclass:mobility_profileStable: high`" = "Diversity × Stable: high",
+  "`diversityclass:mobility_profileStable: middle`" = "Diversity × Stable: middle",  
+  "`diversityclass:mobility_profileDownward`" = "Diversity × Downward",
+  "`diversityclass:mobility_profileUpward`" = "Diversity × Upward",
+  age="Age",
+  sex="Female (ref.=Male)",
+  partner="Has partner (ref.=No)",
+  "parenteducw1Primary Education" = "Primary (ref.=no education)",  
+  "parenteducw1High school Education" = "Secondary",
+  "parenteducw1Technical Education" = "Technical",
+   "parenteducw1Universitary and postgraduate Education" = "Universitary",
+   "parenteducw1No information" = "No information",
+  "`parenteducw1Primary Education`" = "Primary (ref.=no education)",
+  "`parenteducw1High school Education`" = "Secondary",
+  "`parenteducw1Technical Education`" = "Technical",
+  "`parenteducw1Universitary and postgraduate Education`" = "Universitary",
+  "`parenteducw1No information`" = "No information",  
+  "migrationw11" = "Migrant (ref.= Chilean)",
+  time2="2018 (Ref.=2016)",
+  time3="2023",  
+  "diversityclass_gm" = "Diversity (BE)",
+  "(Intercept)"="Constant"
+)
+
+screenreg(list(market_mob_FE,market_mob_RE1,m2,m3),digits = 3,
+          custom.coef.map = var_labels
+          )
+
+htmlreg(list(market_mob_FE,market_mob_RE1,m3),digits = 3,single.row = F,
+  caption.above = T,
+  caption = "Table 1: Fixed-, random-effects and multilevel regression models regression for market justice preferences and network diversity",
+  stars = c(0.001, 0.01, 0.05, 0.1),
+  custom.model.names = c("FE","RE","HLM"),
+  custom.coef.map = var_labels,
+  include.ci = FALSE,
+  omit.coef = "(Intercept)|(time)|(age)|(sex)",
+  custom.gof.rows =  list(
+    "Controls" = c("Yes", "Yes", "Yes"),    
+    "Individual FE" = c("Yes", "Yes", "Yes"),
+    "Time FE" = c("Yes", "Yes", "Yes")
+    ),
+  include.rsquared = F,
+  include.adjrs = F,
+  include.nclusts=F,
+  include.loglik = FALSE,include.aic = FALSE,
+  custom.gof.names = c("Observations","e(res)","e(ind)","BIC","Individuals","Var(ind)","Var(res)"),
+  reorder.gof = c(1,2,3,4,5,6,7,8,9,10),
+  file = here::here("output/tables/table001.html"),
+  custom.note = "%stars; Standard errors in parentheses (clustered standard errors at the individual level).<br>FE = fixed-effects; RE = random-effects, HLM = multilevel with interaction effects using Restricted Maximum Likelihood (REML).<br>The dependent variable is standardized (z-score).Estimations are weighted.")
+```
+
+```{r tableS01}
+paneldata137$n_total_gm<- MLMusingR::group_mean(paneldata137$n_total,grp = paneldata137$id)
+paneldata137$n_total_gc<- paneldata137$n_total-paneldata137$n_total_gm
+paneldata137$time<- factor(paneldata137$time)
+
+market_mob_FE<- plm(market1~diversityclass+time+partner,data=paneldata137,weights = weights1,model = "within")
+market_mob_FEnw<- plm(market1~diversityclass+time+partner,data=paneldata137,model = "within")
+
+market_mob_RE1<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1+partner, data=paneldata137,weights = weights1,model = "random")
+market_mob_RE1nw<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1+partner, data=paneldata137,weights = NULL,model = "random")
+
+m2 <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = weights1)
+m2nw <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = NULL)
+m3 <- lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = weights1)
+m3nw <- lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = NULL)
+
+unweight <- list(market_mob_FEnw,market_mob_RE1nw,m2nw,m3nw)
 
 var_labels <- list(
   diversityclass = "Network Diversity",
@@ -1022,6 +1685,7 @@ var_labels <- list(
   "`diversityclass:mobility_profileUpward`" = "Diversity × Upward",
   age="Age",
   sex="Female (ref.=Male)",
+  partner="Has partner (ref.=No)",
   "parenteducw1Primary Education" = "Primary (ref.=no education)",  
   "parenteducw1High school Education" = "Secondary",
   "parenteducw1Technical Education" = "Technical",
@@ -1038,105 +1702,6 @@ var_labels <- list(
   "diversityclass_gm" = "Diversity (WE)",
   "(Intercept)"="Constant"
 )
-
-screenreg(list(market_mob_FE,market_mob_RE1,m2,m3),digits = 3,
-          custom.coef.map = var_labels
-          )
-
-
-htmlreg(list(market_mob_FE,market_mob_RE1,m3),digits = 3,single.row = T,
-  caption.above = T,
-  caption = "Table 1: Fixed-, random-effects and multilevel regression models regression for market justice preferences and network diversity",
-  stars = c(0.001, 0.01, 0.05, 0.1),
-  custom.model.names = c("FE","RE","HLM"),
-  custom.coef.map = var_labels,
-  include.ci = FALSE,
-  omit.coef = "(Intercept)|(time)|(age)|(sex)",
-  custom.gof.rows =  list(
-    "Controls" = c("Yes", "Yes", "Yes"),    
-    "Individual FE" = c("Yes", "Yes", "Yes"),
-    "Time FE" = c("Yes", "Yes", "Yes")
-    ),
-  include.rsquared = F,
-  include.adjrs = F,
-  include.nclusts=F,
-  include.loglik = FALSE,include.aic = FALSE,
-  custom.gof.names = c("Observations","e(res)","e(ind)","BIC","Individuals","Var(ind)","Var(res)"),
-  reorder.gof = c(1,2,3,4,5,6,7,8,9,10),
-  file = here::here("output/tables/table001.html"),
-  custom.note = "%stars; Standard errors in parentheses (clustered standard errors at the individual level).<br>FE = Fixed-effect; RE = random-effects, HLM = multilevel with interaction effects using Restricted Maximum Likelihood (REML).<br>The dependent variable is standardized (z-score).Estimations are weighted.")
-```
-
-```{r tableS01}
-paneldata137$n_total_gm<- MLMusingR::group_mean(paneldata137$n_total,grp = paneldata137$id)
-paneldata137$n_total_gc<- paneldata137$n_total-paneldata137$n_total_gm
-paneldata137$time<- factor(paneldata137$time)
-
-market_mob_FE<- plm(market1~diversityclass+n_total+time,data=paneldata137,weights = weights1,model = "within")
-market_mob_FEnw<- plm(market1~diversityclass+n_total+time,data=paneldata137,model = "within")
-
-market_mob_RE1<- plm(market1~diversityclass+n_total+mobility_profile+age+sex+time+parenteducw1+migrationw1, data=paneldata137,weights = weights1,model = "random")
-market_mob_RE1nw<- plm(market1~diversityclass+n_total+mobility_profile+age+sex+time+parenteducw1+migrationw1, data=paneldata137,weights = NULL,model = "random")
-
-m2 <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+time+n_total_gc+n_total_gm+(1|id),data = paneldata137,weights = weights1)
-m2nw <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+time+n_total_gc+n_total_gm+(1|id),data = paneldata137,weights = NULL)
-m3 <- lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+time+n_total_gc+n_total_gm+(1|id),data = paneldata137,weights = weights1)
-m3nw <- lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+time+n_total_gc+n_total_gm+(1|id),data = paneldata137,weights = NULL)
-
-unweight <- list(market_mob_FEnw,market_mob_RE1nw,m2nw,m3nw)
-
-var_labels <- list(
-  diversityclass = "Network Diversity",
-  diversityclass_gc = "Network Diversity",
-  n_total = "Network Size",
-  n_total_gc = "Network Size",
-  "mobility_profileStable: NEET" = "Stable: NEET (ref.=Stable: Low)",
-  "mobility_profileStable: high" = "Stable: high",
-  "mobility_profileStable: middle" = "Stable: middle",
-  "mobility_profileDownward" = "Downward",
-  "mobility_profileUpward" = "Upward",
-  "`mobility_profileStable: NEET`" = "Stable: NEET (ref.=Stable: Low)",
-  "`mobility_profileStable: high`" = "Stable: high",
-  "`mobility_profileStable: middle`" = "Stable: middle",
-  "`mobility_profileDownward`" = "Downward",
-  "`mobility_profileUpward`" = "Upward",
-  "diversityclass:mobility_profileStable: NEET" = "Diversity × Stable: NEET",
-  "diversityclass:mobility_profileStable: high" = "Diversity × Stable: high",
-  "diversityclass:mobility_profileStable: middle" = "Diversity × Stable: middle",  
-  "diversityclass:mobility_profileDownward" = "Diversity × Downward",
-  "diversityclass:mobility_profileUpward" = "Diversity × Upward",
-  "diversityclass_gc:mobility_profileStable: NEET" = "Diversity × Stable: NEET",
-  "diversityclass_gc:mobility_profileStable: high" = "Diversity × Stable: high",
-  "diversityclass_gc:mobility_profileStable: middle" = "Diversity × Stable: middle",  
-  "diversityclass_gc:mobility_profileDownward" = "Diversity × Downward",
-  "diversityclass_gc:mobility_profileUpward" = "Diversity × Upward",
-  "`diversityclass:mobility_profileStable: NEET`" = "Diversity × Stable: NEET",
-  "`diversityclass:mobility_profileStable: high`" = "Diversity × Stable: high",
-  "`diversityclass:mobility_profileStable: middle`" = "Diversity × Stable: middle",  
-  "`diversityclass:mobility_profileDownward`" = "Diversity × Downward",
-  "`diversityclass:mobility_profileUpward`" = "Diversity × Upward",
-  age="Age",
-  sex="Female (ref.=Male)",
-  "parenteducw1Primary Education" = "Primary (ref.=no education)",  
-  "parenteducw1High school Education" = "Secondary",
-  "parenteducw1Technical Education" = "Technical",
-   "parenteducw1Universitary and postgraduate Education" = "Universitary",
-   "parenteducw1No information" = "No information",
-  "`parenteducw1Primary Education`" = "Primary (ref.=no education)",
-  "`parenteducw1High school Education`" = "Secondary",
-  "`parenteducw1Technical Education`" = "Technical",
-  "`parenteducw1Universitary and postgraduate Education`" = "Universitary",
-  "`parenteducw1No information`" = "No information",  
-  "migrationw11" = "Migrant (ref.= Chilean)",
-  time2="2018 (Ref.=2016)",
-  time3="2023",  
-  "diversityclass_gm" = "Diversity (WE)",
-  "(Intercept)"="Constant"
-)
-
-screenreg(list(market_mob_FE,market_mob_RE1,m2,m3),digits = 3,
-          custom.coef.map = var_labels
-          )
 
 screenreg(unweight,digits = 3,
           custom.coef.map = var_labels
@@ -1166,7 +1731,7 @@ htmlreg(list(market_mob_FE,market_mob_RE1,m3),digits = 3,single.row = T,
   custom.note = "%stars; Standard errors in parentheses (clustered standard errors at the individual level).<br>FE = Fixed-effect; RE = random-effects, HLM = multilevel with interaction effects using Restricted Maximum Likelihood (REML).<br>The dependent variable is standardized (z-score).")
 ```
 
-```{r figure001}
+```{r figure002}
 set1 <-  RColorBrewer::brewer.pal(n = 8, name = "Set1")
 options(ggplot2.discrete.fill = set1)
 options(ggplot2.discrete.colour = set1)
@@ -1204,57 +1769,17 @@ plot_fig1
 ggsave(plot = last_plot(), filename = "figure2.png", path = "output/images", width = 1.5, height = 1, scale = 15, device = "png", units = "cm",dpi = "retina")
 ggsave(plot = last_plot(), filename = "figure2.pdf", path = "output/images", width = 1.5, height = 1, scale = 15, device = "pdf", units = "cm",dpi = "retina")
 
-df_ame<- plot_slopes(m3, variables = "diversityclass_gc", condition = c("mobility_profile"),draw = F)
-
-
 ```
 
-```{r figure002-predictions}
-pred_div_WE <- 
-  predictions(m3, condition = c("diversityclass_gc","mobility_profile"),
-              newdata = datagrid(diversityclass_gc = 
-                                   seq(min(paneldata137$diversityclass_gc),
-                                       max(paneldata137$diversityclass_gc),
-                                       by= 0.5),
-                                 mobility_profile = levels(paneldata137$mobility_profile)
-                                 ))
-pred_div_WE %>% 
-  filter(mobility_profile != "Stable: NEET") %>%
-  # filter(mobility_profile != "Stable: middle") %>%
-  ggplot(aes(y =estimate,x=diversityclass_gc, fill=mobility_profile, color=mobility_profile,ymin=conf.low, ymax=conf.high)) +
-  geom_ribbon(alpha=0.7,size=1,linetype="solid",color="black") +
-  scale_fill_manual(values = c(
-  "#000000",  # Stable: low
-  "#4D4D4D",  # Downward
-  "#7F7F7F",  # Stable: high
-  "#B3B3B3",  # Stable: middle
-  "#E6E6E6"   # Upward
-  )) +
-  # scale_color_manual(values=c("#989898","#989898","#989898","#989898","#989898","#989898"))+
-  geom_line(size=1,color="black") +
-  geom_point(size=2,color="black") +
-  facet_grid(~factor(mobility_profile))+
-  facet_grid(~factor(mobility_profile,
-                     levels=c("Stable: NEET","Stable: low","Downward","Stable: middle","Upward","Stable: high")))+
-  # scale_y_continuous(limits = c(-1,1))+
-  scale_y_continuous(limits = c(-1,1))+  
-  labs(caption = paste0("Note: N (observations) = ",nobs(m3),"; N (Individuals) = ",lme4::ngrps(m3),". Predictive estimates with 95% confidence intervals. Estimates based on multilevel model. Stable NEET omited for visualization purposes."),
-       x="Network diversity (z-score)",y="Market justice preferences (z-score)",
-       # title = "Mobility trajectories × network diversity."
-       ) +
-  theme(legend.position = "none", legend.title = element_blank())
-
-ggsave(plot = last_plot(),filename = "figure3.png",device = "tiff",
-       path = here::here("output/images"),width = 3,height = 1,units = "cm",scale = 12,dpi = 500)
-```
-
-```{r figure002-AME}
+```{r figure003-AME}
 library(dplyr)
 library(ggplot2)
 library(scales)
 library(forcats)
+
 plot_df <- 
-  df_ame %>% select(mobility_profile,estimate,conf.high,conf.low,p.value) %>%
+  plot_slopes(m3, variables = "diversityclass_gc", condition = c("mobility_profile"),draw = F) %>%
+  select(mobility_profile,estimate,conf.high,conf.low,p.value) %>%
   mutate(
     # nice label: "−0.142 (p = 0.008)" with 3 decimals
     est_str = number(estimate, accuracy = 0.001, big.mark = "", decimal.mark = "."),
@@ -1263,7 +1788,7 @@ plot_df <-
       TRUE            ~ number(p.value, accuracy = 0.001, big.mark = "", decimal.mark = ".")
     ),
     lab = paste0(est_str, " (p = ", p_str, ")"),
-    mobility_profile = factor(mobility_profile,levels = c("Stable: low","Stable: NEET","Stable: middle","Downward","Upward","Stable: high"))
+    mobility_profile = factor(mobility_profile,levels = c("Stable: NEET","Stable: low","Stable: middle","Downward","Upward","Stable: high"))
   )
 
 ggplot(plot_df, aes(x = mobility_profile, y = estimate,label=lab)) +
@@ -1285,9 +1810,61 @@ ggplot(plot_df, aes(x = mobility_profile, y = estimate,label=lab)) +
     # plot.margin = margin(5.5, 45, 5.5, 5.5), # extra right space for labels
     panel.grid.minor = element_blank()
   )
+
+ggsave(plot = last_plot(), filename = "figure3.png", path = "output/images", width = 1, height = 1, scale = 15, device = "png", units = "cm",dpi = "retina")
 ```
 
-## Test mechanisms
+```{r figure004-predictions}
+# pred_div_WE <- 
+#   predictions(m3, condition = c("diversityclass_gc","mobility_profile"),
+#               newdata = datagrid(diversityclass_gc = 
+#                                    seq(min(paneldata137$diversityclass_gc),
+#                                        max(paneldata137$diversityclass_gc),
+#                                        by= 0.5),
+#                                  mobility_profile = levels(paneldata137$mobility_profile)
+#                                  ))
+pred_div_WE <- 
+  predictions(m3, condition = c("diversityclass_gc","mobility_profile"),
+              newdata = datagrid(diversityclass_gc = quantile(paneldata137$diversityclass,probs = c(0.1,0.5,0.9)),
+                                 mobility_profile = levels(paneldata137$mobility_profile)
+                                 )
+              )
+pred_div_WE$diversityclass_gc<- factor(pred_div_WE$diversityclass_gc,labels = c("P10","P50","P90"))
+
+pred_div_WE %>% 
+  filter(mobility_profile != "Stable: NEET") %>%
+  # filter(mobility_profile != "Stable: middle") %>%
+  ggplot(aes(y =estimate,x=diversityclass_gc, fill=mobility_profile, color=mobility_profile,ymin=conf.low, ymax=conf.high)) +
+  # geom_ribbon(alpha=0.7,size=1,linetype="solid",color="black") +
+  geom_errorbar(alpha=0.7,size=1,linetype="solid",color="black",width=0.1)+
+  scale_color_manual(values = c(
+  "#000000",  # Stable: low
+  "#4D4D4D",  # Downward
+  "#7F7F7F",  # Stable: high
+  "#B3B3B3",  # Stable: middle
+  "#E6E6E6"   # Upward
+  )) +
+  # scale_color_manual(values=c("#989898","#989898","#989898","#989898","#989898","#989898"))+
+  # geom_line(size=1,color="black") +
+  geom_point(size=2,color="black") +
+  facet_grid(~factor(mobility_profile))+
+  facet_grid(~factor(mobility_profile,
+                     levels=c("Stable: NEET","Stable: low","Downward","Stable: middle","Upward","Stable: high")))+
+  scale_y_continuous(limits = c(-0.7,0.7),n.breaks = 10)+
+  # scale_y_continuous(limits = c(-1,1))+
+  scale_x_discrete()+
+  labs(caption = paste0("Note: N (observations) = ",nobs(m3),"; N (Individuals) = ",lme4::ngrps(m3),". Predictive estimates with 95% confidence intervals.\nEstimates based on multilevel model. Stable NEET omited for visualization purposes."),
+       x="Network diversity",y="Market justice preferences",
+       # title = "Mobility trajectories × network diversity."
+       ) +
+  theme(legend.position = "none", legend.title = element_blank())
+
+ggsave(plot = last_plot(),filename = "figure4.png",device = "tiff",
+       path = here::here("output/images"),width = 3,height = 1,units = "cm",scale = 10,dpi = 500)
+```
+
+
+### Mechanism
 
 ```{r mecanismos}
 pacman::p_load(dplyr, tidyr, purrr, sjmisc, lme4, plm, panelr, estimatr, ordinal, 
@@ -1300,7 +1877,7 @@ load(file = here::here("input/data/proc/df1_panel_for_mice.RData")); paneldata <
 # Network diversity for longitudinal analysis
 pca_fit_v10 <- 
   psych::principal(r = as.data.frame(paneldata) %>% 
-                     select("entropy_contacts","know_total"),
+                     select("entropy_contacts","know_total","crossclass"),
                    nfactors = 1,rotate = "varimax",scores = T,missing = T, 
                    cor = "cor",weight = paneldata$weights1)
 paneldata$diversityclass <- as.numeric(pca_fit_v10$scores)
@@ -1310,26 +1887,23 @@ mecanism<-
 list(
 # opind=plm(mtdu~diversityclass+sex,data=paneldata,weights = weights1,model = "within",effect = "twoway"),
 # opstru=plm(mfam~diversityclass+sex,data=paneldata,weights = weights1,model = "within",effect = "twoway"),
-concerns=plm(perineq~diversityclass+sex+factor(time),data=paneldata,weights = weights1,model = "within",effect = "individual"),
-gapperc=plm(percgaplog~diversityclass+sex+factor(time),data=paneldata,weights = weights1,model = "within",effect = "individual"),
+concerns=plm(perineq~diversityclass+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
+gapperc=plm(percgaplog~diversityclass+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
 # effort=plm(effort~diversityclass+sex,data=paneldata,weights = weights1,model = "within",effect = "twoway"),
 # talent=plm(talent~diversityclass+sex,data=paneldata,weights = weights1,model = "within",effect = "twoway"),
 # merit=plm(merit~diversityclass+sex,data=paneldata,weights = weights1,model = "within",effect = "twoway"),
-market=plm(market~diversityclass+sex+factor(time),data=paneldata,weights = weights1,model = "within",effect = "individual"),
-market=plm(market~diversityclass+perineq+sex+factor(time),data=paneldata,weights = weights1,model = "within",effect = "individual"),
-market=plm(market~diversityclass+perineq+percgaplog+sex+age+factor(time),data=paneldata,weights = weights1,model = "within",effect = "individual")
+market=plm(market~diversityclass+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
+market=plm(market~diversityclass+perineq+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
+market=plm(market~diversityclass+perineq+percgaplog+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual")
 )
 screenreg(mecanism,digits = 3)
-
-sjPlot::tab_model(list(mec1,mec2,mec3,mec4,mec5,mec6,mec7,mec8,mec9),show.ci = F,show.p = T,show.ngroups = T)
 ```
-
 
 # 02 Supplementary 
 
 ## Descriptive tables
 
-```{r tableA01}
+```{r tableA01-A02}
 set1 <-  RColorBrewer::brewer.pal(n = 8, name = "Set1")
 options(ggplot2.discrete.fill = set1)
 options(ggplot2.discrete.colour = set1)
@@ -1342,15 +1916,16 @@ pacman::p_load(dplyr,sjmisc,sjlabelled,haven,vtable)
 df_tableA1 <- as.data.frame(paneldata137) %>% 
   select(market,
          entropy_contacts,know_total,diversityclass,
-         n_total,
+         # n_total,
          mobility_profile,
-         sex,age,migrationw1,parenteducw1,
+         sex,age,migrationw1,parenteducw1,partner,
          time,
          ) %>%
   na.omit()
 
 df_tableA1$sex <- factor(df_tableA1$sex,c(1,2),c("Man","Woman"))
 df_tableA1$migrationw1 <- factor(df_tableA1$migrationw1,c(0,1),c("Not migrant","Migrant"))
+df_tableA1$partner <- factor(df_tableA1$partner,c(0,1),c("No partner","Has partner"))
 df_tableA1$time <- factor(df_tableA1$time,c(1,2,3),c("2016","2018","2023"))
 
 names(df_tableA1)
@@ -1358,12 +1933,13 @@ varlab <-
 c("Market justice preferences",
   "Entropy","Variety",
   "Class-based network diversity",
-  "Network size",
+  # "Network size",
   "Mobility trajectory",
   "Sex",
   "Age",
   "Migration background",
   "Parental education",
+  "Marital status",
   "Wave"
   )
 
@@ -1476,6 +2052,33 @@ p1 + p2
 ggsave(plot = last_plot(), filename = "figureS01.png", path = "output/images", width = 2, height = 1, scale = 15, device = "png", units = "cm",dpi = "retina")
 ```
 
+## Attrition analysis
+
+```{r}
+# Modelo de regresión logística para predecir atrición
+
+paneldata$at <- car::recode(paneldata$atricion,"2=1;1=0")
+
+modelo_atricion <- plm(at~sex+age+time+partner+factor(isco03_neet)+migrationw1, data = paneldata,model = "pooling")
+summary(modelo_atricion)
+
+# Obtener odds ratios e intervalos de confianza
+library(broom)
+resultados <- tidy(modelo_atricion, conf.int = TRUE, exponentiate = TRUE)
+print(resultados)
+
+# Formato más amigable
+resultados_formateados <- resultados %>%
+  mutate(
+    OR = sprintf("%.2f", estimate),
+    IC = sprintf("%.2f - %.2f", conf.low, conf.high),
+    p_valor = sprintf("%.3f", p.value)
+  ) %>%
+  select(term, OR, IC, p_valor)
+
+print(resultados_formateados)
+```
+
 
 ## Cross-lagged analysis
 
@@ -1492,7 +2095,7 @@ paneldata137 <- paneldata137 %>% group_by(id) %>% mutate(n_obs=n())
 # Network diversity for longitudinal analysis
 pca_fit_v10 <- 
   psych::principal(r = as.data.frame(paneldata137) %>% 
-                     select("entropy_contacts","know_total"),
+                     select("entropy_contacts","know_total","crossclass"),
                    nfactors = 1,rotate = "varimax",scores = T,missing = T, 
                    cor = "cor",weight = paneldata137$weights1)
 paneldata137$diversityclass <- as.numeric(pca_fit_v10$scores)
@@ -1709,11 +2312,11 @@ paneldata137 <- paneldata137 %>% group_by(id) %>% mutate(n_obs=n())
 
 # Select variables for analysis
 paneldata137 <- paneldata137 %>% 
-  select(id,time,market,just_educ,just_salud,just_pension,n_total,isei_avg,entropy_contacts,know_total,sex,age,mobility_cat_adj_isco3,isco03_neet,migrationw1,parenteducw1,ponderador02,weights1) %>% na.omit()
+  select(id,time,market,just_educ,just_salud,just_pension,n_total,isei_avg,entropy_contacts,know_total,crossclass,sex,age,mobility_cat_adj_isco3,isco03_neet,partner,migrationw1,parenteducw1,ponderador02,weights1) %>% na.omit()
 # Network diversity for longitudinal analysis
 pca_fit_v10 <- 
   psych::principal(r = as.data.frame(paneldata137) %>% 
-                     select("entropy_contacts","know_total"),
+                     select("entropy_contacts","know_total","crossclass"),
                    nfactors = 1,rotate = "varimax",scores = T,missing = T, 
                    cor = "cor",weight = paneldata137$weights1)
 paneldata137$diversityclass <- as.numeric(pca_fit_v10$scores)
@@ -1740,12 +2343,6 @@ paneldata137$time<- car::recode(paneldata137$time,recodes = "3=2;7=3",as.factor 
 df_fixed<- paneldata137 %>%filter(time==1) %>%  select(id,agew1=age,-time)
 
 paneldata137 <- left_join(paneldata137,df_fixed,by='id')
-
-paneldata137$diversityclass
-paneldata137$market
-paneldata137$sex
-paneldata137$agew1
-
 paneldata137$time<- as.numeric(as.factor(paneldata137$time))
 
 paneldata137 <- paneldata137 %>% group_by(id) %>% mutate(n_obs=n())
@@ -1764,26 +2361,25 @@ cl_2 <- plm(market ~ lag(market) +
 lag(diversityclass)+ factor(time)+ sex + agew1 ,  data=paneldata137_balanced,
 index = c("id", "time"), model = "pooling")
 
-#* Second set: Table 2, models 7 and 10
-cl_3 <- plm(diversityclass ~ lag(market) + factor(time),
+# Lagged first-difference Y~X and X~Y 
+
+cl_3 <- plm(diversityclass ~ lag(market) + factor(time) + lag(partner) + lag(age),
 data=paneldata137_balanced,
 index = c("id", "time"), model = "fd")
 
-cl_4 <- plm(market ~ lag(diversityclass) + factor(time),
+cl_4 <- plm(market ~ lag(diversityclass) + factor(time)+ lag(partner) + lag(age),
 data=paneldata137_balanced,
 index = c("id", "time"), model = "fd")
 
-
-#* Third set: Table 2, models 9 and 12
-cl_5 <- plm(diversityclass ~ lag(market) + market + factor(time),
+cl_5 <- plm(diversityclass ~ lag(market) + market + factor(time)+ lag(partner) + lag(age),
 data=paneldata137_balanced,
 index = c("id", "time"), model = "fd")
 
-cl_6 <- plm(market ~ lag(diversityclass) + diversityclass + factor(time),
+cl_6 <- plm(market ~ lag(diversityclass) + diversityclass + factor(time)+ lag(partner) + lag(age) + partner +age,
 data=paneldata137_balanced,
 index = c("id", "time"), model = "fd")
 
-cl_7 <- plm(market ~ diversityclass + factor(time),
+cl_7 <- plm(market ~ diversityclass + factor(time)+ lag(partner) + lag(age) + partner +age,
 data=paneldata137_balanced,
 index = c("id", "time"), model = "within",effect = "individual")
 noweights<- list(cl_1,cl_2,cl_3,cl_4,cl_5,cl_6)
@@ -1804,14 +2400,14 @@ pval_cl_4 <- (1 - pnorm(abs(coef(cl_4))/robse_cl_4))*2
 pval_cl_5 <- (1 - pnorm(abs(coef(cl_5))/robse_cl_5))*2
 pval_cl_7 <- (1 - pnorm(abs(coef(cl_7))/robse_cl_7))*2
 
-stargazer::stargazer(noweights,digits = 3,type = "text") 
+stargazer::stargazer(list(cl_3,cl_4,cl_5,cl_6),digits = 3,type = "text") 
+
 screenreg(noweights,digits = 3)
 screenreg(noweights,digits = 3,
           override.se = list(robse_cl_1, robse_cl_2, robse_cl_3, robse_cl_4, robse_cl_5, robse_cl_6),
           override.pvalues = list(pval_cl_1, pval_cl_2, pval_cl_3, pval_cl_4, pval_cl_5, pval_cl_6))
 ```
 
-## Mediation analysis using "mediation"
 
 ```{r}
 pacman::p_load(dplyr,lme4,mediation,psych,texreg)
@@ -1964,6 +2560,26 @@ save(med.between_status_stable_upward,file = "mediation_WE_status_stable_upward.
 ## Regression fixed effects by indicator
 
 ```{r tableS00001}
+pacman::p_load(dplyr, tidyr, purrr, sjmisc, lme4, plm, panelr, estimatr, ordinal, 
+               marginaleffects, MLMusingR, correlation, 
+               ggplot2, ggExtra, ggalluvial, ggtext, sjPlot, broom, 
+               texreg, knitr, kableExtra)
+load(file = here::here("input/data/proc/df1_panel_v2.RData"));paneldata137 <- paneldata
+load(file = here::here("input/data/proc/df1_panel_for_mice.RData")); paneldata <- df1 
+
+paneldata137 <- paneldata137 %>% group_by(id) %>% mutate(n_obs=n())
+
+# Select variables for analysis
+paneldata137 <- paneldata137 %>% 
+  select(id,time,market,just_educ,just_salud,just_pension,n_total,isei_avg,entropy_contacts,know_total,crossclass,sex,age,mobility_cat_adj_isco3,isco03_neet,partner,migrationw1,parenteducw1,ponderador02,weights1) %>% na.omit()
+# Network diversity for longitudinal analysis
+pca_fit_v10 <- 
+  psych::principal(r = as.data.frame(paneldata137) %>% 
+                     select("entropy_contacts","know_total","crossclass"),
+                   nfactors = 1,rotate = "varimax",scores = T,missing = T, 
+                   cor = "cor",weight = paneldata137$weights1)
+paneldata137$diversityclass <- as.numeric(pca_fit_v10$scores)
+
 services_models_fe <- 
 list(
 'Education'=plm(just_educ~diversityclass+time,data=paneldata137,weights = NULL,model = "within",effect = 'individual'),
@@ -2021,7 +2637,7 @@ paneldata137$market1 <- scale(paneldata137$market)
 
 pca_fit_v10 <- 
   psych::principal(r = as.data.frame(paneldata137) %>% 
-                     select("entropy_contacts","know_total"),
+                     select("entropy_contacts","know_total","crossclass"),
                    nfactors = 1,rotate = "varimax",scores = T,missing = T, 
                    cor = "cor",weight = paneldata137$weights1)
 paneldata137$diversityclass <- as.numeric(pca_fit_v10$scores)
@@ -2126,6 +2742,7 @@ screenreg(scaleup_test,digits = 3,custom.coef.map = var_labels)
 # 03 For internal use
 
 ## Coefplot Table 1
+
 ```{r table001-coefplot}
 # Coef Plot---------------------------------------------------------------------
 pred_div_by_isei <- plot_predictions(mkt_just2.4, condition = list(diversityclass = seq(min(paneldata137$diversityclass), max(paneldata137$diversityclass), by = 0.2), isei = c(1,2,3,99)), draw = F)
@@ -2410,7 +3027,6 @@ htmlreg(market_models_fe,stars = c(0.001, 0.01, 0.05, 0.1),digits = 3,
         Models 5 to 6 exclude NEET",
           file = here::here("output/tables/tableX04.html"))
 ```
-
 
 ```{r tableA02}
 # Table SX: Mobility Profiles -------------------------------------------------
@@ -2702,7 +3318,6 @@ ggsave(plot = last_plot(), filename = "figureP1.png", path = "output/images", wi
 ```
 
 ```{r}
-
 # paneldata137$market3<- car::recode(paneldata137$market,"1:2.5=1;2.6:3.5=2;3.6:5=3")
 
 library(car)
@@ -2774,16 +3389,6 @@ p_alluvial_indiv
 
 ggsave(plot = last_plot(), filename = "figureP3.png", path = "output/images", width = 2, height = 1, scale = 10, device = "png", units = "cm")
 ```
-
-
-
-```{r}
-diversity_mob_RE<- lm(diversityclass~ factor(time),data=paneldata137,weights = weights1)
-plot_predictions(diversity_mob_RE,condition = "time") + labs(y="Network diversity (z-score)",x=NULL) + scale_x_discrete(labels=c("Time 1","Time 2","Time 3"))
-
-ggsave(plot = last_plot(), filename = "figureP2.png", path = "output/images", width = 1, height = 1, scale = 15, device = "png", units = "cm")
-```
-
 
 
 # Backupcode
