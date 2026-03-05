@@ -750,12 +750,13 @@ dfreg %>%
          know_total,
          isei_avg=mean_isei,
          n_total,
-         # n_unemploy,
+         n_unemploy,
          just_educ,
          just_salud,
          just_pension,
          market,
-         perineq,percgaplog,
+         perineq,effort,talent,
+         percgaplog,percgap,percobr,percger,justger,justobr,
          isei=isei3res_na,
          iseiavg3,
          isei_c,
@@ -1022,7 +1023,7 @@ isei_mobility$mobility_cat_adj[isei_mobility$toStHig==1] <-"Stable: high"
 
 isei_mobility_iscoc <- isei_mobility
 isei_mobility_iscoc <- isei_mobility_iscoc %>% rename(mobility_cat_adj_isco3c=mobility_cat_adj)
-frq(isei_mobility_iscoc$mobility_cat_adj_isco3b)
+frq(isei_mobility_iscoc$mobility_cat_adj_isco3c)
 }
 
 
@@ -1220,7 +1221,7 @@ save(paneldata,file = here::here("input/data/proc/df1_panel_v2.RData")) #listwis
 
 # 01 Paper
 
-```{r prep-data}
+```{r prep-analysis-data}
 pacman::p_load(dplyr, tidyr, purrr, sjmisc, lme4, plm, panelr, estimatr, ordinal, 
                marginaleffects, MLMusingR, correlation, 
                ggplot2, ggExtra, ggalluvial, ggtext, sjPlot, broom, 
@@ -1228,18 +1229,24 @@ pacman::p_load(dplyr, tidyr, purrr, sjmisc, lme4, plm, panelr, estimatr, ordinal
 load(file = here::here("input/data/proc/df1_panel_v2.RData"));paneldata137 <- paneldata
 load(file = here::here("input/data/proc/df1_panel_for_mice.RData")); paneldata <- df1 
 
+
 militares<- paneldata137 %>% filter(isco08_1lvl=="0000")
 # Select variables for analysis
 paneldata137 <- paneldata137 %>% 
   filter(!id %in% militares$id) %>%
-  select(id,time,market,just_educ,just_salud,just_pension,n_total,isei_avg,entropy_contacts,know_total,crossclass,sex,age,
-         soclass,soclass3a,soclass3b,
-         strong_tie,
-         mobility_cat_adj_isco3,mobility_cat_adj_isco3b,mobility_cat_adj_isco3c,isco03_neet,migrationw1,parenteducw1,isco_father,partner,ponderador02,weights1,atricion) %>% 
-  
+  select(id,time,
+         market,just_educ,just_salud,just_pension, # full information on Y
+         n_total,isei_avg,entropy_contacts,know_total,crossclass,strong_tie, # full information on X
+         sex,age,parenteducw1,migrationw1,isco_father,partner, # Controls
+         soclass,soclass3a,soclass3b, isei_c,isco03_neet, # Rs occupation (O)
+         mobility_cat_adj_isco3,mobility_cat_adj_isco3b,mobility_cat_adj_isco3c, # Mobility (s)
+         ponderador02,weights1,atricion) %>% 
   na.omit()
 # Network diversity for longitudinal analysis
-select(data.frame(paneldata137),"entropy_contacts","know_total","crossclass") %>% correlation::correlation()
+select(data.frame(paneldata137),"entropy_contacts","know_total","crossclass") %>% 
+  correlation::correlation() %>% summary(digits=3) 
+
+skimr::skim(select(data.frame(paneldata137),"entropy_contacts","know_total","crossclass") )
 
 pca_fit_v10 <- 
   psych::principal(r = as.data.frame(paneldata137) %>% 
@@ -1261,6 +1268,7 @@ paneldata137$mobility_profile <-car::recode(
   "
 );paneldata137$mobility_profile <- relevel(paneldata137$mobility_profile,ref = "Stable: low")
 
+paneldata137$isei_c <- car::Recode(paneldata137$isei_c,"0=10")
 paneldata137$parenteducw1 <- factor(paneldata137$parenteducw1,ordered = F)
 paneldata137$migrationw1 <- factor(paneldata137$migrationw1,ordered = F)
 
@@ -1506,6 +1514,36 @@ datos.occupations %>%
 
 ```
 
+```{r tableA02}
+# Table SX: Mobility Profiles -------------------------------------------------
+dftabmobility <- 
+frq(paneldata137$mobility_cat_adj_isco3,show.na = F) %>% 
+  as.data.frame() %>%
+  mutate(val2 = car::recode(val,
+  "c('Downward (Any to NEET)',
+    'Downward (H to L)',
+    'Downward (H to M)',
+    'Downward (M to L)') = 'Downward';
+  c('Upward (L to H)',
+    'Upward (L to M)',
+    'Upward (M to H)',
+    'Upward (NEET to Any)') = 'Upward'
+  ")) %>% 
+  select(val,val2,frq,raw.prc) %>% 
+  left_join(
+    frq(paneldata137$mobility_profile,show.na = F) %>% 
+      as.data.frame() %>% 
+      select(val2=val,frq2=frq,raw.prc2=raw.prc), by = "val2"
+  ) %>% 
+  select(val,frq,raw.prc,val2,frq2,raw.prc2) 
+  
+dftabmobility %>% 
+  kable(col.names = c("Mobility","Freq.","%","Mobility","Freq.","%"),
+        caption = "Table 2: Occupational socioeconomic status and intragenerational social mobility trajectories" ) %>% 
+  kable_classic(html_font = "sans",full_width = F) %>% 
+  collapse_rows(columns = 3:6)
+```
+
 
 ## 2. MODELS: Regression fixed, random and multilevel
 
@@ -1526,7 +1564,7 @@ screenreg(compare_classschemes,digits = 3)
 ```
 
 
-```{r table001}
+```{r table0001-0002}
 # paneldata137$diversityclass<- scale(paneldata137$diversitynml)
 paneldata137$mobility_profile <-car::recode(
   paneldata137$mobility_cat_adj_isco3,
@@ -1541,24 +1579,51 @@ paneldata137$mobility_profile <-car::recode(
   "
 );paneldata137$mobility_profile <- relevel(paneldata137$mobility_profile,ref = "Stable: low")
 
-table(paneldata137$n_obs)
-paneldata137$market1 <- as.numeric(scale(paneldata137$market)) 
-paneldata137$diversityclass_gm<- MLMusingR::group_mean(paneldata137$diversityclass,grp = paneldata137$id)
+paneldata137$market1 <- as.numeric(scale(paneldata137$market))
+paneldata137$diversityclass_gm<- ave(paneldata137$diversityclass, paneldata137$id, FUN = mean)
+paneldata137$isei_gm<- ave(paneldata137$isei_c, paneldata137$id, FUN = mean)
+paneldata137$partner_gm<- ave(paneldata137$partner, paneldata137$id, FUN = mean)
 paneldata137$diversityclass_gc<- paneldata137$diversityclass - paneldata137$diversityclass_gm
 paneldata137$time<- factor(paneldata137$time)
 
-market_mob_FE<- plm(market1~diversityclass+time+partner,data=paneldata137,weights = weights1,model = "within")
-market_mob_FEnw<- plm(market1~diversityclass+time+partner,data=paneldata137,model = "within")
+market_mob_FE <- 
+  plm(market1~diversityclass+time+partner,data=paneldata137,weights = weights1,model = "within")
 
-market_mob_RE1<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1+partner, data=paneldata137,weights = weights1,model = "random")
-market_mob_RE1nw<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1+partner, data=paneldata137,weights = NULL,model = "random")
+market_mob_RE1<- 
+  plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1+partner+partner_gm+diversityclass_gm, data=paneldata137,
+      weights = weights1,model = "random",random.method = "walhus")
 
-m2 <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = weights1)
-m2nw <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = NULL)
-m3 <- lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = weights1)
-m3nw <- lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = NULL)
+m2 <- 
+  lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+partner_gm+time+(1|id),
+             data = paneldata137,weights = weights1)
+m3 <- 
+  lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+partner_gm+time+(1|id),
+             data = paneldata137,weights = weights1)
 
-unweight <- list(market_mob_FEnw,market_mob_RE1nw,m2nw,m3nw)
+
+list(
+  plm(diversityclass~mobility_profile+age+sex+migrationw1+partner+time, data=paneldata137,
+      weights = weights1,model = "random",random.method = "walhus"),  
+  plm(diversityclass~mobility_profile+age+sex+migrationw1+partner+time+isei_c, data=paneldata137,
+      weights = weights1,model = "random",random.method = "walhus"),
+  lme4::lmer(diversityclass ~ diversityclass+mobility_profile+sex+age+migrationw1+partner+time+(1|id),
+             data = paneldata137,weights = weights1),
+  lme4::lmer(diversityclass ~ diversityclass+mobility_profile+sex+age+migrationw1+partner+time+isei_c+(1|id),
+             data = paneldata137,weights = weights1)  
+  ) %>% stargazer::stargazer(type = "text",digits = 2)
+
+
+list(
+lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gc+sex+age+parenteducw1+migrationw1+partner+partner_gm+time+(diversityclass_gc|id),
+             data = paneldata137,weights = NULL),  
+lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gc+sex+age+parenteducw1+migrationw1+partner+partner_gm+time+(diversityclass_gc|id),
+             data = paneldata137,weights = weights1),
+lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gc+sex+age+parenteducw1+migrationw1+partner+partner_gm+time+(diversityclass_gc|id),
+             data = paneldata137,weights = NULL,subset = n_obs==3),
+lme4::lmer(market1 ~ diversityclass_gc*mobility_profile+diversityclass_gc+sex+age+parenteducw1+migrationw1+partner+partner_gm+time+(diversityclass_gc|id),
+             data = paneldata137,weights = weights1,subset = n_obs==3)
+) %>% 
+  screenreg()
 
 var_labels <- list(
   diversityclass = "Network Diversity",
@@ -1589,51 +1654,80 @@ var_labels <- list(
   "`diversityclass:mobility_profileStable: middle`" = "Diversity × Stable: middle",  
   "`diversityclass:mobility_profileDownward`" = "Diversity × Downward",
   "`diversityclass:mobility_profileUpward`" = "Diversity × Upward",
-  age="Age",
-  sex="Female (ref.=Male)",
-  partner="Has partner (ref.=No)",
-  "parenteducw1Primary Education" = "Primary (ref.=no education)",  
-  "parenteducw1High school Education" = "Secondary",
-  "parenteducw1Technical Education" = "Technical",
-   "parenteducw1Universitary and postgraduate Education" = "Universitary",
-   "parenteducw1No information" = "No information",
-  "`parenteducw1Primary Education`" = "Primary (ref.=no education)",
-  "`parenteducw1High school Education`" = "Secondary",
-  "`parenteducw1Technical Education`" = "Technical",
-  "`parenteducw1Universitary and postgraduate Education`" = "Universitary",
-  "`parenteducw1No information`" = "No information",  
-  "migrationw11" = "Migrant (ref.= Chilean)",
+  # age="Age",
+  # sex="Female (ref.=Male)",
+  # "parenteducw1Primary Education" = "Primary (ref.=no education)",  
+  # "parenteducw1High school Education" = "Secondary",
+  # "parenteducw1Technical Education" = "Technical",
+  #  "parenteducw1Universitary and postgraduate Education" = "Universitary",
+  #  "parenteducw1No information" = "No information",
+  # "`parenteducw1Primary Education`" = "Primary (ref.=no education)",
+  # "`parenteducw1High school Education`" = "Secondary",
+  # "`parenteducw1Technical Education`" = "Technical",
+  # "`parenteducw1Universitary and postgraduate Education`" = "Universitary",
+  # "`parenteducw1No information`" = "No information",  
+  # "migrationw11" = "Migrant (ref.= Chilean)",
+  # partner="Has partner (ref.=No)",
+  # isei_c="Occ. status (ISEI)",  
   time2="2018 (Ref.=2016)",
   time3="2023",  
-  "diversityclass_gm" = "Diversity (BE)",
+  # 'as.numeric(time)'="Time (linear)",  
+  # "diversityclass_gm" = "Diversity (CM)",
+  # "partner_gm" = "Has partner (CM)",  
   "(Intercept)"="Constant"
 )
 
-screenreg(list(market_mob_FE,market_mob_RE1,m2,m3),digits = 3,
+screenreg(list(market_mob_FE,market_mob_RE1,m2,m3),digits = 3,single.row = T,
           custom.coef.map = var_labels
           )
 
-htmlreg(list(market_mob_FE,market_mob_RE1,m3),digits = 3,single.row = F,
+###############################################################################.
+# Table: FE and RE --------------------------------------------------------- ##.
+###############################################################################.
+htmlreg(list(market_mob_FE,market_mob_RE1),digits = 3,single.row = F,
   caption.above = T,
-  caption = "Table 1: Fixed-, random-effects and multilevel regression models regression for market justice preferences and network diversity",
+  caption = "Table: Fixed- random-effects and multilevel regression models regression for market justice preferences and network diversity",
   stars = c(0.001, 0.01, 0.05, 0.1),
-  custom.model.names = c("FE","RE","HLM"),
+  custom.model.names = c("FE","RE"),
   custom.coef.map = var_labels,
   include.ci = FALSE,
   omit.coef = "(Intercept)|(time)|(age)|(sex)",
   custom.gof.rows =  list(
-    "Controls" = c("Yes", "Yes", "Yes"),    
-    "Individual FE" = c("Yes", "Yes", "Yes"),
-    "Time FE" = c("Yes", "Yes", "Yes")
+    "Controls" = c("Yes", "Yes"),    
+    "Individual FE" = c("Yes","Yes"),
+    "Time FE" = c("Yes", "Yes")
     ),
   include.rsquared = F,
   include.adjrs = F,
   include.nclusts=F,
   include.loglik = FALSE,include.aic = FALSE,
-  custom.gof.names = c("Observations","e(res)","e(ind)","BIC","Individuals","Var(ind)","Var(res)"),
-  reorder.gof = c(1,2,3,4,5,6,7,8,9,10),
-  file = here::here("output/tables/table001.html"),
-  custom.note = "%stars; Standard errors in parentheses (clustered standard errors at the individual level).<br>FE = fixed-effects; RE = random-effects, HLM = multilevel with interaction effects using Restricted Maximum Likelihood (REML).<br>The dependent variable is standardized (z-score).Estimations are weighted.")
+  # custom.gof.names = c("Observations","e(res)","e(ind)","BIC","Individuals","Var(ind)","Var(res)"),
+  # reorder.gof = c(1,2,3,4,5,6,7,8,9,10),
+  file = here::here("output/tables/table0001.html"),
+  custom.note = "%stars; Standard errors in parentheses (clustered standard errors at the individual level).<br>FE = fixed-effects; RE = random-effects.<br>The dependent variable is standardized (z-score).Estimations are weighted.")
+
+###############################################################################.
+# Table: Multilevel Models with cross-level interaction--------------------- ##.
+###############################################################################.
+htmlreg(list(m3),digits = 3,single.row = F,
+  caption.above = T,
+  caption = "Table: Multilevel regression models regression for market justice preferences and network diversity",
+  stars = c(0.001, 0.01, 0.05, 0.1),
+  custom.model.names = c("HLM"),
+  custom.coef.map = var_labels,
+  include.ci = FALSE,
+  omit.coef = "(Intercept)|(time)|(age)|(sex)",
+  custom.gof.rows =  list(
+    "Controls" = c("Yes")
+    ),
+  include.rsquared = F,
+  include.adjrs = F,
+  include.nclusts=F,
+  include.loglik = FALSE,include.aic = FALSE,
+  # custom.gof.names = c("Observations","e(res)","e(ind)","BIC","Individuals","Var(ind)","Var(res)"),
+  # reorder.gof = c(1,2,3,4,5,6,7,8,9,10),
+  file = here::here("output/tables/table0002.html"),
+  custom.note = "%stars; Standard errors in parentheses (clustered standard errors at the individual level).<br>HLM = multilevel with interaction effects using Restricted Maximum Likelihood (REML).<br>The dependent variable is standardized (z-score).")
 ```
 
 ```{r tableS01}
@@ -1642,10 +1736,14 @@ paneldata137$n_total_gc<- paneldata137$n_total-paneldata137$n_total_gm
 paneldata137$time<- factor(paneldata137$time)
 
 market_mob_FE<- plm(market1~diversityclass+time+partner,data=paneldata137,weights = weights1,model = "within")
+market_mob_FE2<- plm(market1~diversityclass*mobility_profile+time+partner,data=paneldata137,weights = weights1,model = "random")
+phtest(market_mob_FE,market_mob_FE2)
 market_mob_FEnw<- plm(market1~diversityclass+time+partner,data=paneldata137,model = "within")
 
 market_mob_RE1<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1+partner, data=paneldata137,weights = weights1,model = "random")
-market_mob_RE1nw<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1+partner, data=paneldata137,weights = NULL,model = "random")
+
+market_mob_RE1nw<- plm(market1~diversityclass+mobility_profile+age+sex+time+parenteducw1+migrationw1+partner, data=paneldata137,weights = NULL,model = "random",subset = n_obs>1)
+
 
 m2 <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = weights1)
 m2nw <- lme4::lmer(market1 ~ diversityclass_gc+mobility_profile+diversityclass_gm+sex+age+parenteducw1+migrationw1+partner+time+(1|id),data = paneldata137,weights = NULL)
@@ -1707,10 +1805,38 @@ screenreg(unweight,digits = 3,
           custom.coef.map = var_labels
           )
 
+###############################################################################.
+# Table: FE and RE --------------------------------------------------------- ##.
+###############################################################################.
 
+htmlreg(list(market_mob_FE,market_mob_RE1),digits = 3,single.row = T,
+  caption.above = T,
+  caption = "Table: Fixed- random-effects and multilevel regression models regression for market justice preferences and network diversity",
+  stars = c(0.001, 0.01, 0.05, 0.1),
+  custom.model.names = c("FE","RE","HLM"),
+  custom.coef.map = var_labels,
+  include.ci = FALSE,
+  omit.coef = "(Intercept)|(time)|(age)|(sex)",
+  custom.gof.rows =  list(
+    "Controls" = c("Yes", "Yes", "Yes"),    
+    "Individual FE" = c("Yes", "Yes", "Yes"),
+    "Time FE" = c("Yes", "Yes", "Yes")
+    ),
+  include.rsquared = F,
+  include.adjrs = F,
+  include.nclusts=F,
+  include.loglik = FALSE,include.aic = FALSE,
+  custom.gof.names = c("Observations","e(res)","e(ind)","BIC","Individuals","Var(ind)","Var(res)"),
+  reorder.gof = c(1,2,3,4,5,6,7,8,9,10),
+  file = here::here("output/tables/tableS01.html"),
+  custom.note = "%stars; Standard errors in parentheses (clustered standard errors at the individual level).<br>FE = Fixed-effect; RE = random-effects .<br>The dependent variable is standardized (z-score).")
+
+###############################################################################.
+# Table: Multilevel Models with cross-level interaction--------------------- ##.
+###############################################################################.
 htmlreg(list(market_mob_FE,market_mob_RE1,m3),digits = 3,single.row = T,
   caption.above = T,
-  caption = "Table: Fixed-, random-effects and multilevel regression models regression for market justice preferences and network diversity",
+  caption = "Table: Fixed- random-effects and multilevel regression models regression for market justice preferences and network diversity",
   stars = c(0.001, 0.01, 0.05, 0.1),
   custom.model.names = c("FE","RE","HLM"),
   custom.coef.map = var_labels,
@@ -1729,6 +1855,7 @@ htmlreg(list(market_mob_FE,market_mob_RE1,m3),digits = 3,single.row = T,
   reorder.gof = c(1,2,3,4,5,6,7,8,9,10),
   file = here::here("output/tables/tableS01.html"),
   custom.note = "%stars; Standard errors in parentheses (clustered standard errors at the individual level).<br>FE = Fixed-effect; RE = random-effects, HLM = multilevel with interaction effects using Restricted Maximum Likelihood (REML).<br>The dependent variable is standardized (z-score).")
+
 ```
 
 ```{r figure002}
@@ -1799,15 +1926,20 @@ ggplot(plot_df, aes(x = mobility_profile, y = estimate,label=lab)) +
   ) +
   # place labels slightly to the right of the CI upper bound
   geom_text(
-    nudge_y = 0,
-    nudge_x = 0.1,
-    hjust = 0, size = 3.3, family = "serif"
+    nudge_y = -0.01,
+    nudge_x = 0.2,
+    hjust = 0, size = 3.4, family = "serif"
   ) +
   coord_flip(clip = "off") +
-  labs(x = NULL, y = "AMEs (95% CI)") +
+  labs(x = NULL, y = "AME", 
+       caption = paste0(
+      "*Note*: N = ",
+      nobs(m3),
+      ". 95% CIs. Based on hierarchical linear model (HLM)"
+    )) +
   # theme_minimal(base_family = "serif") +
   theme(
-    # plot.margin = margin(5.5, 45, 5.5, 5.5), # extra right space for labels
+    plot.caption = element_markdown(hjust = 1, size = 13),
     panel.grid.minor = element_blank()
   )
 
@@ -1873,7 +2005,7 @@ pacman::p_load(dplyr, tidyr, purrr, sjmisc, lme4, plm, panelr, estimatr, ordinal
                texreg, knitr, kableExtra)
 load(file = here::here("input/data/proc/df1_panel_v2.RData"));paneldata137 <- paneldata
 load(file = here::here("input/data/proc/df1_panel_for_mice.RData")); paneldata <- df1 
-
+paneldata <- paneldata %>% filter(ola %in% c(1,3,5,7))
 # Network diversity for longitudinal analysis
 pca_fit_v10 <- 
   psych::principal(r = as.data.frame(paneldata) %>% 
@@ -1882,21 +2014,31 @@ pca_fit_v10 <-
                    cor = "cor",weight = paneldata$weights1)
 paneldata$diversityclass <- as.numeric(pca_fit_v10$scores)
 
-
 mecanism<- 
 list(
 # opind=plm(mtdu~diversityclass+sex,data=paneldata,weights = weights1,model = "within",effect = "twoway"),
 # opstru=plm(mfam~diversityclass+sex,data=paneldata,weights = weights1,model = "within",effect = "twoway"),
 concerns=plm(perineq~diversityclass+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
 gapperc=plm(percgaplog~diversityclass+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
-# effort=plm(effort~diversityclass+sex,data=paneldata,weights = weights1,model = "within",effect = "twoway"),
-# talent=plm(talent~diversityclass+sex,data=paneldata,weights = weights1,model = "within",effect = "twoway"),
+effort=plm(effort~diversityclass+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
+talent=plm(talent~diversityclass+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
 # merit=plm(merit~diversityclass+sex,data=paneldata,weights = weights1,model = "within",effect = "twoway"),
 market=plm(market~diversityclass+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
 market=plm(market~diversityclass+perineq+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
 market=plm(market~diversityclass+perineq+percgaplog+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual")
 )
 screenreg(mecanism,digits = 3)
+
+
+salaries<- 
+list(
+perobr=plm(log(percobr)~num_high+num_middle+num_low+isei_c+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
+percger=plm(log(percger)~num_high+num_middle+num_low+isei_c+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
+percgap=plm(log(percgap)~num_high+num_middle+num_low+isei_c+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual"),
+percgap=plm(log(percgap)~diversityclass+isei_c+sex+factor(time)+partner,data=paneldata,weights = weights1,model = "within",effect = "individual")
+)
+screenreg(salaries,digits = 3)
+
 ```
 
 # 02 Supplementary 
@@ -2055,29 +2197,40 @@ ggsave(plot = last_plot(), filename = "figureS01.png", path = "output/images", w
 ## Attrition analysis
 
 ```{r}
+pacman::p_load(dplyr, tidyr, purrr, sjmisc, lme4, plm, panelr, estimatr, ordinal, 
+               marginaleffects, MLMusingR, correlation, 
+               ggplot2, ggExtra, ggalluvial, ggtext, sjPlot, broom, 
+               texreg, knitr, kableExtra)
+load(file = here::here("input/data/proc/df1_panel_v2.RData"));paneldata137 <- paneldata
+
+militares<- paneldata137 %>% filter(isco08_1lvl=="0000")
+# Select variables for analysis
+paneldata137 <- paneldata137 %>% 
+  filter(!id %in% militares$id) %>%
+  select(id,time,market,just_educ,just_salud,just_pension,n_total,isei_avg,entropy_contacts,know_total,crossclass,sex,age,
+         soclass,soclass3a,soclass3b,
+         strong_tie,
+         mobility_cat_adj_isco3,mobility_cat_adj_isco3b,mobility_cat_adj_isco3c,isco03_neet,migrationw1,parenteducw1,isco_father,partner,ponderador02,weights1,atricion) %>% na.omit()
+
 # Modelo de regresión logística para predecir atrición
-
 paneldata$at <- car::recode(paneldata$atricion,"2=1;1=0")
+paneldata137$at <- car::recode(paneldata137$atricion,"2=1;1=0")
 
-modelo_atricion <- plm(at~sex+age+time+partner+factor(isco03_neet)+migrationw1, data = paneldata,model = "pooling")
-summary(modelo_atricion)
+panel_data <- 
+panelr::as_panel(paneldata137,id = "id",wave = "ola") %>% 
+  filter(ola %in% c(1,7)) %>% 
+  select(id,ola,sex,age,isco03_neet,migrationw1,weights1,ponderador02) %>% panelr::widen_panel() %>% 
+  mutate(out=ifelse((is.na(age_7) & is.na(isco03_neet_7)),yes=1,no=0))
 
-# Obtener odds ratios e intervalos de confianza
-library(broom)
-resultados <- tidy(modelo_atricion, conf.int = TRUE, exponentiate = TRUE)
-print(resultados)
+modelo_atricion <- glm(out~sex+age_1+factor(isco03_neet_1), data = panel_data,family = 'binomial')
+modelo_atricion_w <- glm(out~sex+age_1+factor(isco03_neet_1), data = panel_data,family = 'binomial',weights =  weights1_1)
 
-# Formato más amigable
-resultados_formateados <- resultados %>%
-  mutate(
-    OR = sprintf("%.2f", estimate),
-    IC = sprintf("%.2f - %.2f", conf.low, conf.high),
-    p_valor = sprintf("%.3f", p.value)
-  ) %>%
-  select(term, OR, IC, p_valor)
+screenreg(list(modelo_atricion,modelo_atricion_w),single.row = F,digits = 3)
 
-print(resultados_formateados)
+table(paneldata$ola)
+table(paneldata137$time)
 ```
+
 
 
 ## Cross-lagged analysis
@@ -3028,35 +3181,6 @@ htmlreg(market_models_fe,stars = c(0.001, 0.01, 0.05, 0.1),digits = 3,
           file = here::here("output/tables/tableX04.html"))
 ```
 
-```{r tableA02}
-# Table SX: Mobility Profiles -------------------------------------------------
-dftabmobility <- 
-frq(paneldata137$mobility_cat_adj,show.na = F) %>% 
-  as.data.frame() %>%
-  mutate(val2 = car::recode(val,
-  "c('Downward (Any to NEET)',
-    'Downward (H to L)',
-    'Downward (H to M)',
-    'Downward (M to L)') = 'Downward';
-  c('Upward (L to H)',
-    'Upward (L to M)',
-    'Upward (M to H)',
-    'Upward (NEET to Any)') = 'Upward'
-  ")) %>% 
-  select(val,val2,frq,raw.prc) %>% 
-  left_join(
-    frq(paneldata137$mobility_profile,show.na = F) %>% 
-      as.data.frame() %>% 
-      select(val2=val,frq2=frq,raw.prc2=raw.prc), by = "val2"
-  ) %>% 
-  select(val,frq,raw.prc,val2,frq2,raw.prc2) 
-  
-dftabmobility %>% 
-  kable(col.names = c("Mobility","Freq.","%","Mobility","Freq.","%"),
-        caption = "Table S2:Occupational socioeconomic status and intragenerational social mobility trajectories" ) %>% 
-  kable_classic(html_font = "sans",full_width = F) %>% 
-  collapse_rows(columns = 3:6)
-```
 
 ## Analysis time-trends
 
