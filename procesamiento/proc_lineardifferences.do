@@ -1,5 +1,6 @@
+clear
 use "C:/Users/Julio/OneDrive - Universidad Católica de Chile/papers\refgroup-social/input/data/proc/df1_panelV2.dta"
-use "C:\Users\jiturra\OneDrive - Universidad Católica de Chile\papers\refgroup-social\input/data/proc/df1_panelV2.dta"
+*use "C:\Users\jiturra\OneDrive - Universidad Católica de Chile\papers\refgroup-social\input/data/proc/df1_panelV2.dta"
 * If not already set:
 xtset id time
 
@@ -9,6 +10,12 @@ gen D_diversityclass   = D.diversityclass
 gen L1_diversityclass  = L.diversityclass
 gen D_L1_diversityclass = L.D.diversityclass   // (ΔX)_{t-1}
 
+gen D_partner   = D.partner
+gen L1_partner  = L.partner
+gen D_L1_partner = L.D.partner // (ΔX)_{t-1}
+
+
+
 * Keep defined differences
 keep if !missing(D_market)
 
@@ -16,14 +23,13 @@ keep if !missing(D_market)
 eststo clear
 
 * (1) Baseline FD: Δmarket = α + β Δdiversityclass + τ_t + ε
-eststo m1: reg D_market D_diversityclass i.time, vce(robust)
+eststo m1: reg D_market D_diversityclass D_partner i.time, vce(cluster id)
 
 * (2) FD + lagged level of X: Δmarket = α + β ΔX + γ X_{t-1} + τ_t + ε
-eststo m2: reg D_market D_diversityclass L1_diversityclass i.time, vce(robust)
+eststo m2: reg D_market D_diversityclass D_partner L1_diversityclass L1_partner i.time, vce(cluster id)
 
 * (3) FD + lagged ΔX: Δmarket = α + β ΔX + γ ΔX_{t-1} + τ_t + ε
-eststo m3: reg D_market D_diversityclass D_L1_diversityclass i.time, vce(robust)
-
+eststo m3: reg D_market D_diversityclass D_L1_diversityclass D_partner D_L1_partner   i.time, vce(cluster id)
 
 * Pretty table on screen (stars, clustered SEs shown, compact)
 esttab m1 m2 m3, ///

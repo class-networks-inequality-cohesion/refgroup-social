@@ -30,7 +30,7 @@ options(scipen=9999) # desactivar notacion cientifica
 ```{r}
 remove(list = ls()) # clean workspace
 if (!require("pacman")) install.packages("pacman") # install pacman
-install.packages("devtools")
+# install.packages("devtools")
 # devtools::install_git("https://code.europa.eu/digclass/digclass.git",force = TRUE)
 
 pacman::p_load(dplyr,readxl,sjmisc, sjlabelled, questionr, car,here,ggplot2,DIGCLASS,spatstat)# load libraries
@@ -1919,6 +1919,63 @@ elsoc_long[,c("diversitypca",
               "diversitycfa","strong_tie_t1")] %>% 
   sjPlot::tab_corr()
 ```
+
+# ISCO code for father 
+
+```{r CIUO-CL INE}
+
+library(httr)
+glosa<- car::recode(elsoc_long$m57,"NA=''")
+
+request <-  httr::POST("https://rapps.ine.cl:9292/predict",
+                       encode = "json",
+                       body =  list(text = glosa,
+                                    classification = "ciuo",
+                                    digits = 1))
+
+# # Revisar el status
+httr::status_code(request)
+#
+# # Extraer el contenido
+response <- httr::content(request,encoding = "UTF-8",as = "text")
+#
+# # Ordenar el contenido
+library(jsonlite)
+isco_ine_father<- fromJSON(response) %>% as.data.frame()
+elsoc_long$isco_ine_father <- isco_ine_father$cod_final
+elsoc_long$isco_ine_father <- ifelse(is.na(elsoc_long$m57),yes = NA,no = elsoc_long$isco_ine_father)
+frq(elsoc_long$isco_ine_father)
+
+# 0 = in labor market, 1 =  not in labor market
+elsoc_long$neet_father <- elsoc_long$m58
+table(elsoc_long$neet_father,elsoc_long$ola,useNA = 'ifany')
+table((elsoc_long$neet_father %in% c(6,7) & elsoc_long$ola==6))
+
+elsoc_long$neet_father <- ifelse((elsoc_long$neet_father %in% c(6,7) & elsoc_long$ola == 6),yes = 1,no = 0)
+table(elsoc_long$neet_father,elsoc_long$ola)
+table(elsoc_long$neet_father,elsoc_long$isco_ine_father)
+
+elsoc_long$isco03father <- car::recode(elsoc_long$isco_ine_father,"c('1','2','3')=3;c('4','5','0','6','7','8')=2;c('9')=1")
+frq(elsoc_long$isco03father)
+table(elsoc_long$neet_father,elsoc_long$isco03father,useNA = "ifany")
+
+table(elsoc_long$neet_father,elsoc_long$isco03father,useNA = "ifany")
+
+elsoc_long$isco03father<- ifelse(is.na(elsoc_long$isco03father),yes = 99,no = elsoc_long$isco03father)
+
+table(elsoc_long$isco03father,elsoc_long$ola,useNA = "ifany")
+
+elsoc_long <-
+left_join(x = elsoc_long,
+          y = (elsoc_long %>% filter(ola==6) %>% select(idencuesta,isco_father=isco03father)),
+         by = "idencuesta")
+
+frq(elsoc_long$isco_father)
+elsoc_long$isco_father <- car::recode(elsoc_long$isco_father,"NA=99")
+frq(elsoc_long$isco_father)
+elsoc_long$isco_father <- 1
+```
+
 
 
 # Save data
