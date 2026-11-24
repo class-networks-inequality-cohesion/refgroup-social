@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Julio César Iturra-Sanhueza">
+<meta name="dcterms.date" content="2026-11-25">
+
+<title>Oscillating mobility trajectories (proposal, Study 2)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="prod_mobility-oscillation_files/libs/clipboard/clipboard.min.js"></script>
+<script src="prod_mobility-oscillation_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="prod_mobility-oscillation_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="prod_mobility-oscillation_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="prod_mobility-oscillation_files/libs/quarto-html/popper.min.js"></script>
+<script src="prod_mobility-oscillation_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="prod_mobility-oscillation_files/libs/quarto-html/anchor.min.js"></script>
+<link href="prod_mobility-oscillation_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="prod_mobility-oscillation_files/libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="prod_mobility-oscillation_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="prod_mobility-oscillation_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="prod_mobility-oscillation_files/libs/bootstrap/bootstrap-9e3ffae467580fdb927a41352e75a2e0.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#setup" id="toc-setup" class="nav-link active" data-scroll-target="#setup">Setup</a></li>
+  <li><a href="#purpose" id="toc-purpose" class="nav-link" data-scroll-target="#purpose">Purpose</a></li>
+  <li><a href="#how-mobility_cat_adj_isco3-is-built-now" id="toc-how-mobility_cat_adj_isco3-is-built-now" class="nav-link" data-scroll-target="#how-mobility_cat_adj_isco3-is-built-now">How <code>mobility_cat_adj_isco3</code> is built now</a></li>
+  <li><a href="#step-1.-data-and-analytical-sample" id="toc-step-1.-data-and-analytical-sample" class="nav-link" data-scroll-target="#step-1.-data-and-analytical-sample">Step 1. Data and analytical sample</a></li>
+  <li><a href="#step-2.-observed-sequences" id="toc-step-2.-observed-sequences" class="nav-link" data-scroll-target="#step-2.-observed-sequences">Step 2. Observed sequences</a>
+  <ul class="collapse">
+  <li><a href="#the-label-mismatch-in-the-75-rule" id="toc-the-label-mismatch-in-the-75-rule" class="nav-link" data-scroll-target="#the-label-mismatch-in-the-75-rule">The label mismatch in the 75% rule</a></li>
+  </ul></li>
+  <li><a href="#step-3.-proposed-classifications" id="toc-step-3.-proposed-classifications" class="nav-link" data-scroll-target="#step-3.-proposed-classifications">Step 3. Proposed classifications</a>
+  <ul class="collapse">
+  <li><a href="#how-respondents-move-between-the-current-classification-and-the-proposals" id="toc-how-respondents-move-between-the-current-classification-and-the-proposals" class="nav-link" data-scroll-target="#how-respondents-move-between-the-current-classification-and-the-proposals">How respondents move between the current classification and the proposals</a></li>
+  <li><a href="#who-oscillates-proposal-2" id="toc-who-oscillates-proposal-2" class="nav-link" data-scroll-target="#who-oscillates-proposal-2">Who oscillates (Proposal 2)</a></li>
+  </ul></li>
+  <li><a href="#step-4.-consequences-for-the-main-model" id="toc-step-4.-consequences-for-the-main-model" class="nav-link" data-scroll-target="#step-4.-consequences-for-the-main-model">Step 4. Consequences for the main model</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Oscillating mobility trajectories (proposal, Study 2)</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Julio César Iturra-Sanhueza </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 25, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="setup" class="level2">
+<h2 class="anchored" data-anchor-id="setup">Setup</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>set1 <span class="ot">&lt;-</span> RColorBrewer<span class="sc">::</span><span class="fu">brewer.pal</span>(<span class="at">n =</span> <span class="dv">8</span>, <span class="at">name =</span> <span class="st">"Set1"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">ggplot2.discrete.fill =</span> set1)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">ggplot2.discrete.colour =</span> set1)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>ggplot2<span class="sc">::</span><span class="fu">theme_set</span>(ggplot2<span class="sc">::</span><span class="fu">theme_bw</span>())</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>ggplot2<span class="sc">::</span><span class="fu">theme_update</span>(<span class="at">text =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">15</span>, <span class="at">family =</span> <span class="st">"serif"</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen =</span> <span class="dv">999</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">"pacman"</span>)) <span class="fu">install.packages</span>(<span class="st">"pacman"</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(dplyr, tidyr, lme4, ggplot2, ggtext, scales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="purpose" class="level2">
+<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<p><code>mobility_cat_adj_isco3</code> classifies respondents only by their first and last observed occupational position. Respondents who move back and forth between positions are classified as <em>Upward</em>, <em>Downward</em>, or <em>Stable</em> depending on where the sequence happens to start and end. This document reviews how the variable is built and proposes alternatives with an <em>Oscillating</em> category.</p>
+</section>
+<section id="how-mobility_cat_adj_isco3-is-built-now" class="level2">
+<h2 class="anchored" data-anchor-id="how-mobility_cat_adj_isco3-is-built-now">How <code>mobility_cat_adj_isco3</code> is built now</h2>
+<p>In <code>00-main_analysis.Rmd</code> (section <em>Mobility profiles, ISCO08 alternative A</em>):</p>
+<ol type="1">
+<li><strong>Position in each wave.</strong> <code>isco03_neet</code> is recoded as 1 NEET, 2 low, 3 middle, 4 high. Missing occupation (<code>NA</code>) is coded as NEET. Occupation is observed in 2016, 2018, 2021, and 2023.</li>
+<li><strong>First and last position.</strong> The trajectory compares the first and the last observed position. Equal positions give <em>Stable</em>. A higher last position gives <em>Upward</em>. A lower last position gives <em>Downward</em>. Everything in between is ignored.</li>
+<li><strong>75% rule.</strong> Respondents with at least 3 observations who spent 75% or more of their observations in one position, and who are classified as mobile, are reclassified as stable in that position.</li>
+</ol>
+<p>This construction has three problems.</p>
+<ul>
+<li><strong>Oscillations are hidden.</strong> A sequence such as M-H-M-H is classified as <em>Upward (M to H)</em>. N-M-N-M is <em>Upward (NEET to Any)</em>. M-N-M-M is <em>Stable: middle</em>, although the respondent left employment for one wave.</li>
+<li><strong>The 75% rule is applied asymmetrically.</strong> The vector <code>mobility_categories</code> lists <code>"Upward (L - H)"</code>, <code>"Upward (L - M)"</code>, and <code>"Upward (M - H)"</code>, but the categories are labeled <code>"Upward (L to H)"</code>, <code>"Upward (L to M)"</code>, and <code>"Upward (M to H)"</code>. The rule therefore never applies to upward mobility between occupations, while it does apply to all downward categories and to <em>Upward (NEET to Any)</em>. For example, H-H-H-M becomes <em>Stable: high</em>, but M-H-H-H stays <em>Upward</em>.</li>
+<li><strong>With 3 observations the rule never applies.</strong> With 3 observations, 75% means all 3 in the same position, so first and last are already equal. In practice the rule only reclassifies respondents observed in all 4 waves whose single deviating wave is the first or the last one.</li>
+</ul>
+</section>
+<section id="step-1.-data-and-analytical-sample" class="level2">
+<h2 class="anchored" data-anchor-id="step-1.-data-and-analytical-sample">Step 1. Data and analytical sample</h2>
+<p><code>df1</code> is the panel saved in <code>00-main_analysis.Rmd</code> before <code>na.omit()</code>. The trajectories are built with all waves in <code>df1</code> (as in the paper), and the analytical sample (6,574 observations, 2,872 individuals) is used for the tables and the models.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"input/data/proc/df1_panel_for_mice.RData"</span>))   <span class="co"># df1</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df1 <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(df1)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>militares <span class="ot">&lt;-</span> df1 <span class="sc">%&gt;%</span> <span class="fu">filter</span>(isco08_1lvl <span class="sc">==</span> <span class="st">"0000"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(id) <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>vars_paper <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"id"</span>, <span class="st">"time"</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"market"</span>, <span class="st">"just_educ"</span>, <span class="st">"just_salud"</span>, <span class="st">"just_pension"</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"n_total"</span>, <span class="st">"isei_avg"</span>, <span class="st">"entropy_contacts"</span>, <span class="st">"know_total"</span>, <span class="st">"crossclass"</span>, <span class="st">"strong_tie"</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"sex"</span>, <span class="st">"age"</span>, <span class="st">"parenteducw1"</span>, <span class="st">"migrationw1"</span>, <span class="st">"isco_father"</span>, <span class="st">"partner"</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"isei_c"</span>, <span class="st">"isco03_neet"</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mobility_cat_adj_isco3"</span>, <span class="st">"mobility_cat_unadj"</span>, <span class="st">"mobility_cat_adj_isco3b"</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mobility_cat_adj_isco3c"</span>, <span class="st">"mobility_cat_adj_isco3d"</span>, <span class="st">"mobility_cat_adj_egp3"</span>, <span class="st">"moves"</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ponderador02"</span>, <span class="st">"weights1"</span>, <span class="st">"atricion"</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>an <span class="ot">&lt;-</span> df1 <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>id <span class="sc">%in%</span> militares) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">all_of</span>(vars_paper)) <span class="sc">%&gt;%</span> <span class="fu">na.omit</span>() <span class="sc">%&gt;%</span> <span class="fu">as.data.frame</span>()</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nrow</span>(an) <span class="sc">==</span> <span class="dv">6574</span>, <span class="fu">n_distinct</span>(an<span class="sc">$</span>id) <span class="sc">==</span> <span class="dv">2872</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="step-2.-observed-sequences" class="level2">
+<h2 class="anchored" data-anchor-id="step-2.-observed-sequences">Step 2. Observed sequences</h2>
+<p>Each respondent’s sequence of positions is written as a string (N = NEET, L = low, M = middle, H = high), in the same coding used for the trajectories. A <strong>reversal</strong> is a change of direction: a move up followed by a move down, or the reverse.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>lab <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"N"</span>, <span class="st">"L"</span>, <span class="st">"M"</span>, <span class="st">"H"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>df1<span class="sc">$</span>mob_t <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(car<span class="sc">::</span><span class="fu">recode</span>(<span class="fu">as.numeric</span>(df1<span class="sc">$</span>isco03_neet), <span class="st">"c(4,NA)=0"</span>)) <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>recode_profile <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">suppressWarnings</span>(car<span class="sc">::</span><span class="fu">recode</span>(<span class="fu">as.character</span>(x),</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"c('Downward (Any to NEET)','Downward (H to L)','Downward (H to M)','Downward (M to L)')='Downward';</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="st">   c('Upward (L to H)','Upward (L to M)','Upward (M to H)','Upward (NEET to Any)')='Upward'"</span>))</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>n_reversals <span class="ot">&lt;-</span> <span class="cf">function</span>(v) { d <span class="ot">&lt;-</span> <span class="fu">sign</span>(<span class="fu">diff</span>(v)); d <span class="ot">&lt;-</span> d[d <span class="sc">!=</span> <span class="dv">0</span>]; <span class="fu">sum</span>(<span class="fu">diff</span>(d) <span class="sc">!=</span> <span class="dv">0</span>) }</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>n_moves     <span class="ot">&lt;-</span> <span class="cf">function</span>(v) <span class="fu">sum</span>(<span class="fu">diff</span>(v) <span class="sc">!=</span> <span class="dv">0</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>seqs <span class="ot">&lt;-</span> df1 <span class="sc">%&gt;%</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(id <span class="sc">%in%</span> an<span class="sc">$</span>id) <span class="sc">%&gt;%</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(id, ola) <span class="sc">%&gt;%</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">seq       =</span> <span class="fu">paste</span>(lab[mob_t], <span class="at">collapse =</span> <span class="st">"-"</span>),</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_waves   =</span> <span class="fu">n</span>(),</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">moves     =</span> <span class="fu">n_moves</span>(mob_t),</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>            <span class="at">reversals =</span> <span class="fu">n_reversals</span>(mob_t),</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>            <span class="at">current   =</span> <span class="fu">recode_profile</span>(<span class="fu">first</span>(mobility_cat_adj_isco3)),</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>            <span class="at">current_detail =</span> <span class="fu">as.character</span>(<span class="fu">first</span>(mobility_cat_adj_isco3)),</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Current trajectory by number of reversals (persons)</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="fu">addmargins</span>(<span class="fu">table</span>(<span class="at">current =</span> seqs<span class="sc">$</span>current, <span class="at">reversals =</span> <span class="fu">pmin</span>(seqs<span class="sc">$</span>reversals, <span class="dv">2</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                reversals
+current             0    1    2  Sum
+  Downward        271   54   24  349
+  Stable: high    268   47    0  315
+  Stable: low      91   31    2  124
+  Stable: middle  640  129    6  775
+  Stable: NEET    796  112    0  908
+  Upward          300   63   38  401
+  Sum            2366  436   70 2872</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># "Stable" respondents whose position changed at some point</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>seqs <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"Stable"</span>, current)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(current) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">n</span>(), <span class="at">with_changes =</span> <span class="fu">sum</span>(moves <span class="sc">&gt;</span> <span class="dv">0</span>), <span class="at">share =</span> <span class="fu">round</span>(<span class="fu">mean</span>(moves <span class="sc">&gt;</span> <span class="dv">0</span>), <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">current</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">with_changes</th>
+<th style="text-align: right;">share</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Stable: NEET</td>
+<td style="text-align: right;">908</td>
+<td style="text-align: right;">208</td>
+<td style="text-align: right;">0.229</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Stable: high</td>
+<td style="text-align: right;">315</td>
+<td style="text-align: right;">69</td>
+<td style="text-align: right;">0.219</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Stable: low</td>
+<td style="text-align: right;">124</td>
+<td style="text-align: right;">57</td>
+<td style="text-align: right;">0.460</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Stable: middle</td>
+<td style="text-align: right;">775</td>
+<td style="text-align: right;">210</td>
+<td style="text-align: right;">0.271</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Most frequent sequences with a reversal</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">sort</span>(<span class="fu">table</span>(<span class="fu">paste0</span>(seqs<span class="sc">$</span>current, <span class="st">": "</span>, seqs<span class="sc">$</span>seq)[seqs<span class="sc">$</span>reversals <span class="sc">&gt;</span> <span class="dv">0</span>]), <span class="at">decreasing =</span> <span class="cn">TRUE</span>), <span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  Stable: NEET: N-M-N-N Stable: middle: M-N-M-M Stable: middle: M-M-N-M 
+                     22                      21                      19 
+  Stable: NEET: N-N-M-N   Stable: NEET: N-L-N-N Stable: middle: M-H-M-M 
+                     17                      15                      14 
+    Stable: NEET: N-M-N Stable: middle: M-M-H-M   Stable: high: H-M-H-H 
+                     14                      11                      10 
+  Stable: middle: M-H-M   Stable: middle: M-L-M   Stable: NEET: N-N-L-N 
+                     10                      10                      10 
+        Upward: M-H-M-H   Stable: middle: M-N-M   Stable: NEET: N-M-M-N 
+                     10                       9                       9 
+Stable: middle: M-L-M-M Stable: middle: M-N-N-M   Stable: high: H-H-M-H 
+                      8                       8                       7 
+    Stable: high: H-N-H    Stable: low: L-L-M-L 
+                      7                       7 </code></pre>
+</div>
+</div>
+<section id="the-label-mismatch-in-the-75-rule" class="level3">
+<h3 class="anchored" data-anchor-id="the-label-mismatch-in-the-75-rule">The label mismatch in the 75% rule</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>mobility_categories <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Downward (Any to NEET)"</span>, <span class="st">"Downward (H to L)"</span>, <span class="st">"Downward (H to M)"</span>, <span class="st">"Downward (M to L)"</span>,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Upward (L - H)"</span>, <span class="st">"Upward (L - M)"</span>, <span class="st">"Upward (M - H)"</span>, <span class="st">"Upward (NEET to Any)"</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Labels in the rule that do not exist in the data</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">setdiff</span>(mobility_categories, <span class="fu">unique</span>(<span class="fu">as.character</span>(df1<span class="sc">$</span>mobility_cat_unadj)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Upward (L - H)" "Upward (L - M)" "Upward (M - H)"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Upward respondents between occupations who would be reclassified with the correct labels</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>share_max <span class="ot">&lt;-</span> <span class="cf">function</span>(s) { v <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(s, <span class="st">"-"</span>)[[<span class="dv">1</span>]]; <span class="fu">max</span>(<span class="fu">table</span>(v)) <span class="sc">/</span> <span class="fu">length</span>(v) }</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>seqs<span class="sc">$</span>share_max <span class="ot">&lt;-</span> <span class="fu">sapply</span>(seqs<span class="sc">$</span>seq, share_max)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>missed <span class="ot">&lt;-</span> seqs <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"^Upward </span><span class="sc">\\</span><span class="st">((L|M) to"</span>, current_detail), n_waves <span class="sc">&gt;=</span> <span class="dv">3</span>, share_max <span class="sc">&gt;=</span> <span class="fl">0.75</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(missed<span class="sc">$</span>current_detail, missed<span class="sc">$</span>seq)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                 
+                  L-H-H-H L-L-L-M L-M-M-M M-H-H-H M-M-M-H
+  Upward (L to H)       2       0       0       0       0
+  Upward (L to M)       0       5       4       0       0
+  Upward (M to H)       0       0       0      12      19</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="step-3.-proposed-classifications" class="level2">
+<h2 class="anchored" data-anchor-id="step-3.-proposed-classifications">Step 3. Proposed classifications</h2>
+<p>All proposals use the full sequence instead of only the first and last positions.</p>
+<ul>
+<li><strong>Stable.</strong> The position never changes. The stable category is the observed position.</li>
+<li><strong>Upward.</strong> At least one change, and all changes go up (for example L-M-M-H or N-N-L).</li>
+<li><strong>Downward.</strong> At least one change, and all changes go down.</li>
+<li><strong>Oscillating.</strong> At least one reversal (for example M-H-M, N-M-N-M, L-M-N-N).</li>
+</ul>
+<p>The proposals differ in how they treat short deviations.</p>
+<ul>
+<li><strong>Proposal 1 (strict).</strong> Every change counts. Any reversal makes the trajectory <em>Oscillating</em>, including a single-wave deviation such as M-N-M-M.</li>
+<li><strong>Proposal 2 (isolated deviations smoothed, recommended).</strong> A single interior wave that differs from both neighbors, when the neighbors are equal (M-N-M-M, H-M-H-H), is treated as a transitory deviation and replaced by the neighbors’ position before classifying. This applies only when the sequence has a single such deviation. Alternating sequences (M-H-M-H, N-M-N-M) have two and remain <em>Oscillating</em>. This rule replaces the 75% rule. It is symmetric, and it does not depend on whether the deviation is up or down. Changes in the first or last wave are not smoothed, because the sequence does not show whether they are transitory.</li>
+<li><strong>Proposal 3 (Proposal 2 + 75% rule, corrected).</strong> Same as Proposal 2, but the 75% rule is also applied, with correct labels, to <em>Upward</em> and <em>Downward</em> respondents observed in 4 waves. The shares are computed on the observed sequence, not the smoothed one. This keeps the logic of the paper (a single deviation in the first or last wave counts as stable) and adds the <em>Oscillating</em> category. <em>Oscillating</em> respondents are not affected by the rule.</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>classify <span class="ot">&lt;-</span> <span class="cf">function</span>(v) {</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">sign</span>(<span class="fu">diff</span>(v)); d <span class="ot">&lt;-</span> d[d <span class="sc">!=</span> <span class="dv">0</span>]</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(d) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="fu">paste0</span>(<span class="st">"Stable: "</span>, <span class="fu">c</span>(<span class="st">"NEET"</span>, <span class="st">"low"</span>, <span class="st">"middle"</span>, <span class="st">"high"</span>)[v[<span class="dv">1</span>]]))</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">all</span>(d <span class="sc">&gt;</span> <span class="dv">0</span>)) <span class="fu">return</span>(<span class="st">"Upward"</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">all</span>(d <span class="sc">&lt;</span> <span class="dv">0</span>)) <span class="fu">return</span>(<span class="st">"Downward"</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Oscillating"</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Interior single-wave deviations (neighbors equal, the wave differs), detected on the original sequence</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>blips <span class="ot">&lt;-</span> <span class="cf">function</span>(v) {</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">length</span>(v); <span class="cf">if</span> (n <span class="sc">&lt;</span> <span class="dv">3</span>) <span class="fu">return</span>(<span class="fu">integer</span>(<span class="dv">0</span>))</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">which</span>(<span class="fu">sapply</span>(<span class="dv">2</span><span class="sc">:</span>(n <span class="sc">-</span> <span class="dv">1</span>), <span class="cf">function</span>(i) v[i <span class="sc">-</span> <span class="dv">1</span>] <span class="sc">==</span> v[i <span class="sc">+</span> <span class="dv">1</span>] <span class="sc">&amp;&amp;</span> v[i] <span class="sc">!=</span> v[i <span class="sc">-</span> <span class="dv">1</span>])) <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>smooth_one <span class="ot">&lt;-</span> <span class="cf">function</span>(v) { b <span class="ot">&lt;-</span> <span class="fu">blips</span>(v); <span class="cf">if</span> (<span class="fu">length</span>(b) <span class="sc">==</span> <span class="dv">1</span>) v[b] <span class="ot">&lt;-</span> v[b <span class="sc">-</span> <span class="dv">1</span>]; v }</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>rule75 <span class="ot">&lt;-</span> <span class="cf">function</span>(v, cls) {</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span>cls <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Upward"</span>, <span class="st">"Downward"</span>) <span class="sc">||</span> <span class="fu">length</span>(v) <span class="sc">&lt;</span> <span class="dv">4</span>) <span class="fu">return</span>(cls)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  tb <span class="ot">&lt;-</span> <span class="fu">table</span>(v); <span class="cf">if</span> (<span class="fu">max</span>(tb) <span class="sc">/</span> <span class="fu">length</span>(v) <span class="sc">&gt;=</span> <span class="fl">0.75</span>)</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">paste0</span>(<span class="st">"Stable: "</span>, <span class="fu">c</span>(<span class="st">"NEET"</span>, <span class="st">"low"</span>, <span class="st">"middle"</span>, <span class="st">"high"</span>)[<span class="fu">as.numeric</span>(<span class="fu">names</span>(<span class="fu">which.max</span>(tb)))]))</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  cls</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>to_vec <span class="ot">&lt;-</span> <span class="cf">function</span>(s) <span class="fu">match</span>(<span class="fu">strsplit</span>(s, <span class="st">"-"</span>)[[<span class="dv">1</span>]], lab)</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>seqs <span class="ot">&lt;-</span> seqs <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">seq_smooth =</span> <span class="fu">sapply</span>(seq, <span class="cf">function</span>(s) <span class="fu">paste</span>(lab[<span class="fu">smooth_one</span>(<span class="fu">to_vec</span>(s))], <span class="at">collapse =</span> <span class="st">"-"</span>)),</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">prop1 =</span> <span class="fu">sapply</span>(seq,        <span class="cf">function</span>(s) <span class="fu">classify</span>(<span class="fu">to_vec</span>(s))),</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">prop2 =</span> <span class="fu">sapply</span>(seq_smooth, <span class="cf">function</span>(s) <span class="fu">classify</span>(<span class="fu">to_vec</span>(s))),</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">prop3 =</span> <span class="fu">mapply</span>(<span class="cf">function</span>(s, c) <span class="fu">rule75</span>(<span class="fu">to_vec</span>(s), c), seq, prop2, <span class="at">USE.NAMES =</span> <span class="cn">FALSE</span>))   <span class="co"># shares from the observed sequence</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>lv <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Stable: NEET"</span>, <span class="st">"Stable: low"</span>, <span class="st">"Stable: middle"</span>, <span class="st">"Stable: high"</span>, <span class="st">"Upward"</span>, <span class="st">"Downward"</span>, <span class="st">"Oscillating"</span>)</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (v <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"current"</span>, <span class="st">"prop1"</span>, <span class="st">"prop2"</span>, <span class="st">"prop3"</span>)) seqs[[v]] <span class="ot">&lt;-</span> <span class="fu">factor</span>(seqs[[v]], <span class="at">levels =</span> lv)</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Persons per category</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>(seqs[, <span class="fu">c</span>(<span class="st">"current"</span>, <span class="st">"prop1"</span>, <span class="st">"prop2"</span>, <span class="st">"prop3"</span>)], table)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               current prop1 prop2 prop3
+Stable: NEET       908   700   793   889
+Stable: low        124    67    93   122
+Stable: middle     775   565   674   772
+Stable: high       315   246   282   318
+Upward             401   373   397   282
+Downward           349   415   430   286
+Oscillating          0   506   203   203</code></pre>
+</div>
+</div>
+<section id="how-respondents-move-between-the-current-classification-and-the-proposals" class="level3">
+<h3 class="anchored" data-anchor-id="how-respondents-move-between-the-current-classification-and-the-proposals">How respondents move between the current classification and the proposals</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">addmargins</span>(<span class="fu">table</span>(<span class="at">current =</span> seqs<span class="sc">$</span>current, <span class="at">proposal1 =</span> seqs<span class="sc">$</span>prop1))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                proposal1
+current          Stable: NEET Stable: low Stable: middle Stable: high Upward
+  Stable: NEET            700           0              0            0     42
+  Stable: low               0          67              0            0      5
+  Stable: middle            0           0            565            0     20
+  Stable: high              0           0              0          246      6
+  Upward                    0           0              0            0    300
+  Downward                  0           0              0            0      0
+  Oscillating               0           0              0            0      0
+  Sum                     700          67            565          246    373
+                proposal1
+current          Downward Oscillating  Sum
+  Stable: NEET         54         112  908
+  Stable: low          19          33  124
+  Stable: middle       55         135  775
+  Stable: high         16          47  315
+  Upward                0         101  401
+  Downward            271          78  349
+  Oscillating           0           0    0
+  Sum                 415         506 2872</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">addmargins</span>(<span class="fu">table</span>(<span class="at">current =</span> seqs<span class="sc">$</span>current, <span class="at">proposal2 =</span> seqs<span class="sc">$</span>prop2))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                proposal2
+current          Stable: NEET Stable: low Stable: middle Stable: high Upward
+  Stable: NEET            793           0              0            0     42
+  Stable: low               0          93              0            0      5
+  Stable: middle            0           0            674            0     20
+  Stable: high              0           0              0          282      6
+  Upward                    0           0              0            0    324
+  Downward                  0           0              0            0      0
+  Oscillating               0           0              0            0      0
+  Sum                     793          93            674          282    397
+                proposal2
+current          Downward Oscillating  Sum
+  Stable: NEET         54          19  908
+  Stable: low          19           7  124
+  Stable: middle       55          26  775
+  Stable: high         16          11  315
+  Upward                0          77  401
+  Downward            286          63  349
+  Oscillating           0           0    0
+  Sum                 430         203 2872</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">addmargins</span>(<span class="fu">table</span>(<span class="at">current =</span> seqs<span class="sc">$</span>current, <span class="at">proposal3 =</span> seqs<span class="sc">$</span>prop3))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                proposal3
+current          Stable: NEET Stable: low Stable: middle Stable: high Upward
+  Stable: NEET            889           0              0            0      0
+  Stable: low               0         117              0            0      0
+  Stable: middle            0           0            749            0      0
+  Stable: high              0           0              0          304      0
+  Upward                    0           5             23           14    282
+  Downward                  0           0              0            0      0
+  Oscillating               0           0              0            0      0
+  Sum                     889         122            772          318    282
+                proposal3
+current          Downward Oscillating  Sum
+  Stable: NEET          0          19  908
+  Stable: low           0           7  124
+  Stable: middle        0          26  775
+  Stable: high          0          11  315
+  Upward                0          77  401
+  Downward            286          63  349
+  Oscillating           0           0    0
+  Sum                 286         203 2872</code></pre>
+</div>
+</div>
+</section>
+<section id="who-oscillates-proposal-2" class="level3">
+<h3 class="anchored" data-anchor-id="who-oscillates-proposal-2">Who oscillates (Proposal 2)</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>osc <span class="ot">&lt;-</span> seqs <span class="sc">%&gt;%</span> <span class="fu">filter</span>(prop2 <span class="sc">==</span> <span class="st">"Oscillating"</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Most oscillations involve moving in and out of employment (NEET)</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="at">involves_NEET =</span> <span class="fu">grepl</span>(<span class="st">"N"</span>, osc<span class="sc">$</span>seq_smooth))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>involves_NEET
+FALSE  TRUE 
+   39   164 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">sort</span>(<span class="fu">table</span>(osc<span class="sc">$</span>seq_smooth), <span class="at">decreasing =</span> <span class="cn">TRUE</span>), <span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+M-H-M-H N-M-M-N M-N-N-M M-M-N-H N-M-N-M H-M-M-H L-M-N-N M-H-H-M M-M-N-L M-H-N-N 
+     10       9       8       7       7       6       6       6       6       5 
+  M-N-H M-N-M-N N-H-M-M L-N-M-M L-N-N-L   M-H-N M-L-M-L M-M-H-N N-H-H-M N-L-N-L 
+      5       5       5       4       4       4       4       4       4       4 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Net direction between the first and the last position (-1 down, 0 none, 1 up)</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="at">net =</span> <span class="fu">sign</span>(<span class="fu">sapply</span>(osc<span class="sc">$</span>seq_smooth, <span class="cf">function</span>(s) { v <span class="ot">&lt;-</span> <span class="fu">to_vec</span>(s); v[<span class="fu">length</span>(v)] <span class="sc">-</span> v[<span class="dv">1</span>] })))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>net
+-1  0  1 
+63 63 77 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Smoothed deviations, most frequent</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>sm <span class="ot">&lt;-</span> seqs <span class="sc">%&gt;%</span> <span class="fu">filter</span>(seq <span class="sc">!=</span> seq_smooth)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(sm)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 303</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">sort</span>(<span class="fu">table</span>(<span class="fu">paste</span>(sm<span class="sc">$</span>seq, <span class="st">"-&gt;"</span>, sm<span class="sc">$</span>seq_smooth)), <span class="at">decreasing =</span> <span class="cn">TRUE</span>), <span class="dv">15</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+N-M-N-N -&gt; N-N-N-N M-N-M-M -&gt; M-M-M-M M-M-N-M -&gt; M-M-M-M N-N-M-N -&gt; N-N-N-N 
+                22                 21                 19                 17 
+N-L-N-N -&gt; N-N-N-N M-H-M-M -&gt; M-M-M-M     N-M-N -&gt; N-N-N M-M-H-M -&gt; M-M-M-M 
+                15                 14                 14                 11 
+H-M-H-H -&gt; H-H-H-H     M-H-M -&gt; M-M-M     M-L-M -&gt; M-M-M N-N-L-N -&gt; N-N-N-N 
+                10                 10                 10                 10 
+    M-N-M -&gt; M-M-M M-L-M-M -&gt; M-M-M-M H-H-M-H -&gt; H-H-H-H 
+                 9                  8                  7 </code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="step-4.-consequences-for-the-main-model" class="level2">
+<h2 class="anchored" data-anchor-id="step-4.-consequences-for-the-main-model">Step 4. Consequences for the main model</h2>
+<p>The paper’s interaction model (Table S4, weighted hybrid random intercept model) is re-estimated with each classification. <em>Stable: low</em> is the reference in all models. The AME of diversity (WE) in each group is computed as a linear combination of coefficients (delta method).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>an <span class="ot">&lt;-</span> an <span class="sc">%&gt;%</span> <span class="fu">left_join</span>(seqs <span class="sc">%&gt;%</span> <span class="fu">select</span>(id, current, prop1, prop2, prop3), <span class="at">by =</span> <span class="st">"id"</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>pca <span class="ot">&lt;-</span> psych<span class="sc">::</span><span class="fu">pca</span>(<span class="at">r =</span> an <span class="sc">%&gt;%</span> <span class="fu">select</span>(entropy_contacts, know_total, crossclass), <span class="at">nfactors =</span> <span class="dv">1</span>, <span class="at">rotate =</span> <span class="st">"oblimin"</span>,</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">scores =</span> <span class="cn">TRUE</span>, <span class="at">missing =</span> <span class="cn">TRUE</span>, <span class="at">cor =</span> <span class="st">"cor"</span>, <span class="at">weight =</span> an<span class="sc">$</span>ponderador02)</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>an<span class="sc">$</span>diversityclass    <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(pca<span class="sc">$</span>scores)</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>an<span class="sc">$</span>parenteducw1      <span class="ot">&lt;-</span> <span class="fu">factor</span>(an<span class="sc">$</span>parenteducw1, <span class="at">ordered =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>an<span class="sc">$</span>migrationw1       <span class="ot">&lt;-</span> <span class="fu">factor</span>(an<span class="sc">$</span>migrationw1, <span class="at">ordered =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>an<span class="sc">$</span>time              <span class="ot">&lt;-</span> <span class="fu">factor</span>(car<span class="sc">::</span><span class="fu">recode</span>(an<span class="sc">$</span>time, <span class="st">"3=2;7=3"</span>))</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>an<span class="sc">$</span>market1           <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">scale</span>(an<span class="sc">$</span>market))</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>an<span class="sc">$</span>diversityclass_gm <span class="ot">&lt;-</span> <span class="fu">ave</span>(an<span class="sc">$</span>diversityclass, an<span class="sc">$</span>id, <span class="at">FUN =</span> mean)</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>an<span class="sc">$</span>partner_gm        <span class="ot">&lt;-</span> <span class="fu">ave</span>(an<span class="sc">$</span>partner, an<span class="sc">$</span>id, <span class="at">FUN =</span> mean)</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>an<span class="sc">$</span>diversityclass_gc <span class="ot">&lt;-</span> an<span class="sc">$</span>diversityclass <span class="sc">-</span> an<span class="sc">$</span>diversityclass_gm</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>fit_traj <span class="ot">&lt;-</span> <span class="cf">function</span>(var) {</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> an; d<span class="sc">$</span>traj <span class="ot">&lt;-</span> <span class="fu">relevel</span>(<span class="fu">droplevels</span>(d[[var]]), <span class="at">ref =</span> <span class="st">"Stable: low"</span>)</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lmer</span>(market1 <span class="sc">~</span> diversityclass_gc<span class="sc">*</span>traj <span class="sc">+</span> diversityclass_gm <span class="sc">+</span> sex <span class="sc">+</span> age <span class="sc">+</span> parenteducw1 <span class="sc">+</span> migrationw1 <span class="sc">+</span></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>         partner <span class="sc">+</span> partner_gm <span class="sc">+</span> time <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>id), <span class="at">data =</span> d, <span class="at">weights =</span> weights1)</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>mods <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">c</span>(<span class="at">current =</span> <span class="st">"current"</span>, <span class="at">prop1 =</span> <span class="st">"prop1"</span>, <span class="at">prop2 =</span> <span class="st">"prop2"</span>, <span class="at">prop3 =</span> <span class="st">"prop3"</span>), fit_traj)</span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Check: the current classification reproduces Table S4</span></span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">fixef</span>(mods<span class="sc">$</span>current)[<span class="fu">c</span>(<span class="st">"diversityclass_gc"</span>, <span class="st">"diversityclass_gc:trajStable: high"</span>)], <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                 diversityclass_gc diversityclass_gc:trajStable: high 
+                             0.091                             -0.285 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ame_lc <span class="ot">&lt;-</span> <span class="cf">function</span>(m, w) {</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> <span class="fu">fixef</span>(m); V <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(<span class="fu">vcov</span>(m))</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  L <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">length</span>(b)), <span class="fu">names</span>(b)); L[<span class="fu">names</span>(w)] <span class="ot">&lt;-</span> <span class="fu">unlist</span>(w)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  est <span class="ot">&lt;-</span> <span class="fu">sum</span>(L <span class="sc">*</span> b); se <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">drop</span>(<span class="fu">t</span>(L) <span class="sc">%*%</span> V <span class="sc">%*%</span> L))</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">AME =</span> est, <span class="at">SE =</span> se, <span class="at">lo =</span> est <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se, <span class="at">hi =</span> est <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se, <span class="at">p =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(est <span class="sc">/</span> se)))</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>ame_traj <span class="ot">&lt;-</span> <span class="cf">function</span>(m) {</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  groups <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">"^diversityclass_gc:traj"</span>, <span class="st">""</span>, <span class="fu">grep</span>(<span class="st">"^diversityclass_gc:traj"</span>, <span class="fu">names</span>(<span class="fu">fixef</span>(m)), <span class="at">value =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">c</span>(<span class="st">"Stable: low"</span>, groups), <span class="cf">function</span>(k) {</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>    w <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">diversityclass_gc =</span> <span class="dv">1</span>)</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (k <span class="sc">!=</span> <span class="st">"Stable: low"</span>) w[[<span class="fu">paste0</span>(<span class="st">"diversityclass_gc:traj"</span>, k)]] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cbind</span>(<span class="at">trajectory =</span> k, <span class="fu">ame_lc</span>(m, w))</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>  }))</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>labels <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">current =</span> <span class="st">"Current"</span>, <span class="at">prop1 =</span> <span class="st">"Proposal 1 (strict)"</span>,</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">prop2 =</span> <span class="st">"Proposal 2 (smoothed)"</span>, <span class="at">prop3 =</span> <span class="st">"Proposal 3 (smoothed + 75%)"</span>)</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>ame_all <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="fu">lapply</span>(<span class="fu">names</span>(mods), <span class="cf">function</span>(k) <span class="fu">cbind</span>(<span class="at">classification =</span> labels[[k]], <span class="fu">ame_traj</span>(mods[[k]]))))</span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>ame_all<span class="sc">$</span>trajectory     <span class="ot">&lt;-</span> <span class="fu">factor</span>(ame_all<span class="sc">$</span>trajectory, <span class="at">levels =</span> <span class="fu">rev</span>(<span class="fu">c</span>(<span class="st">"Stable: NEET"</span>, <span class="st">"Stable: low"</span>, <span class="st">"Stable: middle"</span>,</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>                                                                 <span class="st">"Downward"</span>, <span class="st">"Upward"</span>, <span class="st">"Oscillating"</span>, <span class="st">"Stable: high"</span>)))</span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>ame_all<span class="sc">$</span>classification <span class="ot">&lt;-</span> <span class="fu">factor</span>(ame_all<span class="sc">$</span>classification, <span class="at">levels =</span> labels)</span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>ame_all <span class="sc">%&gt;%</span></span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cell =</span> <span class="fu">paste0</span>(<span class="fu">sprintf</span>(<span class="st">"%.3f"</span>, AME), <span class="fu">ifelse</span>(p <span class="sc">&lt;</span> <span class="fl">0.001</span>, <span class="st">"***"</span>, <span class="fu">ifelse</span>(p <span class="sc">&lt;</span> <span class="fl">0.01</span>, <span class="st">"**"</span>, <span class="fu">ifelse</span>(p <span class="sc">&lt;</span> <span class="fl">0.05</span>, <span class="st">"*"</span>, <span class="fu">ifelse</span>(p <span class="sc">&lt;</span> <span class="fl">0.1</span>, <span class="st">"+"</span>, <span class="st">""</span>)))))) <span class="sc">%&gt;%</span></span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(trajectory, classification, cell) <span class="sc">%&gt;%</span></span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> classification, <span class="at">values_from =</span> cell) <span class="sc">%&gt;%</span></span>
+<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(trajectory))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 10%">
+<col style="width: 21%">
+<col style="width: 23%">
+<col style="width: 29%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">trajectory</th>
+<th style="text-align: left;">Current</th>
+<th style="text-align: left;">Proposal 1 (strict)</th>
+<th style="text-align: left;">Proposal 2 (smoothed)</th>
+<th style="text-align: left;">Proposal 3 (smoothed + 75%)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Stable: NEET</td>
+<td style="text-align: left;">-0.038</td>
+<td style="text-align: left;">-0.094**</td>
+<td style="text-align: left;">-0.046</td>
+<td style="text-align: left;">-0.037</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Stable: low</td>
+<td style="text-align: left;">0.091</td>
+<td style="text-align: left;">-0.034</td>
+<td style="text-align: left;">0.060</td>
+<td style="text-align: left;">0.105</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Stable: middle</td>
+<td style="text-align: left;">-0.001</td>
+<td style="text-align: left;">0.024</td>
+<td style="text-align: left;">0.015</td>
+<td style="text-align: left;">-0.002</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Downward</td>
+<td style="text-align: left;">-0.150***</td>
+<td style="text-align: left;">-0.134**</td>
+<td style="text-align: left;">-0.148***</td>
+<td style="text-align: left;">-0.172***</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Upward</td>
+<td style="text-align: left;">-0.130***</td>
+<td style="text-align: left;">-0.094*</td>
+<td style="text-align: left;">-0.111**</td>
+<td style="text-align: left;">-0.145***</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Oscillating</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">-0.036</td>
+<td style="text-align: left;">-0.058</td>
+<td style="text-align: left;">-0.057</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Stable: high</td>
+<td style="text-align: left;">-0.194***</td>
+<td style="text-align: left;">-0.050</td>
+<td style="text-align: left;">-0.185**</td>
+<td style="text-align: left;">-0.188***</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Persons per group in the model sample</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>(an[<span class="sc">!</span><span class="fu">duplicated</span>(an<span class="sc">$</span>id), <span class="fu">c</span>(<span class="st">"current"</span>, <span class="st">"prop1"</span>, <span class="st">"prop2"</span>, <span class="st">"prop3"</span>)], table)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               current prop1 prop2 prop3
+Stable: NEET       908   700   793   889
+Stable: low        124    67    93   122
+Stable: middle     775   565   674   772
+Stable: high       315   246   282   318
+Upward             401   373   397   282
+Downward           349   415   430   286
+Oscillating          0   506   203   203</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ame_all, <span class="fu">aes</span>(<span class="at">x =</span> trajectory, <span class="at">y =</span> AME, <span class="at">color =</span> classification, <span class="at">shape =</span> classification)) <span class="sc">+</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> lo, <span class="at">ymax =</span> hi), <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.7</span>), <span class="at">size =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"black"</span>, set1[<span class="dv">2</span>], set1[<span class="dv">1</span>], set1[<span class="dv">3</span>])) <span class="sc">+</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"AME of network diversity (WE)"</span>, <span class="at">color =</span> <span class="cn">NULL</span>, <span class="at">shape =</span> <span class="cn">NULL</span>,</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="fu">paste0</span>(<span class="st">"*Note*: N = "</span>, <span class="fu">nobs</span>(mods<span class="sc">$</span>current), <span class="st">" ("</span>, <span class="fu">ngrps</span>(mods<span class="sc">$</span>current)[[<span class="st">"id"</span>]],</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>                        <span class="st">" individuals). 95% CIs. Weighted hierarchical linear models (HLM)."</span>)) <span class="sc">+</span></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">nrow =</span> <span class="dv">2</span>), <span class="at">shape =</span> <span class="fu">guide_legend</span>(<span class="at">nrow =</span> <span class="dv">2</span>)) <span class="sc">+</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.caption =</span> <span class="fu">element_markdown</span>(<span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">size =</span> <span class="dv">12</span>, <span class="at">family =</span> <span class="st">"serif"</span>),</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">"bottom"</span>, <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="prod_mobility-oscillation_files/figure-html/plot-1.png" class="img-fluid figure-img" width="1056"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">plot =</span> <span class="fu">last_plot</span>(), <span class="at">filename =</span> <span class="st">"figureS_oscillation_ame.png"</span>, <span class="at">path =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output/images"</span>),</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">width =</span> <span class="fl">1.5</span>, <span class="at">height =</span> <span class="dv">1</span>, <span class="at">scale =</span> <span class="dv">15</span>, <span class="at">device =</span> <span class="st">"png"</span>, <span class="at">units =</span> <span class="st">"cm"</span>, <span class="at">dpi =</span> <span class="st">"retina"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

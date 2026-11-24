@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Julio César Iturra-Sanhueza">
+<meta name="dcterms.date" content="2026-11-25">
+
+<title>Longer panel with last observation carried forward (robustness check, Study 2)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="prod_robustness-locf_files/libs/clipboard/clipboard.min.js"></script>
+<script src="prod_robustness-locf_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="prod_robustness-locf_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="prod_robustness-locf_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="prod_robustness-locf_files/libs/quarto-html/popper.min.js"></script>
+<script src="prod_robustness-locf_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="prod_robustness-locf_files/libs/quarto-html/anchor.min.js"></script>
+<link href="prod_robustness-locf_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="prod_robustness-locf_files/libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="prod_robustness-locf_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="prod_robustness-locf_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="prod_robustness-locf_files/libs/bootstrap/bootstrap-9e3ffae467580fdb927a41352e75a2e0.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#setup" id="toc-setup" class="nav-link active" data-scroll-target="#setup">Setup</a></li>
+  <li><a href="#purpose" id="toc-purpose" class="nav-link" data-scroll-target="#purpose">Purpose</a></li>
+  <li><a href="#step-1.-load-the-data" id="toc-step-1.-load-the-data" class="nav-link" data-scroll-target="#step-1.-load-the-data">Step 1. Load the data</a></li>
+  <li><a href="#step-2.-build-the-even-wave-rows" id="toc-step-2.-build-the-even-wave-rows" class="nav-link" data-scroll-target="#step-2.-build-the-even-wave-rows">Step 2. Build the even-wave rows</a></li>
+  <li><a href="#step-3.-stack-the-panel" id="toc-step-3.-stack-the-panel" class="nav-link" data-scroll-target="#step-3.-stack-the-panel">Step 3. Stack the panel</a></li>
+  <li><a href="#step-4.-analytical-samples" id="toc-step-4.-analytical-samples" class="nav-link" data-scroll-target="#step-4.-analytical-samples">Step 4. Analytical samples</a>
+  <ul class="collapse">
+  <li><a href="#mobility-trajectories-are-not-recomputed" id="toc-mobility-trajectories-are-not-recomputed" class="nav-link" data-scroll-target="#mobility-trajectories-are-not-recomputed">Mobility trajectories are not recomputed</a></li>
+  </ul></li>
+  <li><a href="#step-5.-analysis-variables" id="toc-step-5.-analysis-variables" class="nav-link" data-scroll-target="#step-5.-analysis-variables">Step 5. Analysis variables</a></li>
+  <li><a href="#step-6.-models" id="toc-step-6.-models" class="nav-link" data-scroll-target="#step-6.-models">Step 6. Models</a>
+  <ul class="collapse">
+  <li><a href="#within-person-effect-of-diversity" id="toc-within-person-effect-of-diversity" class="nav-link" data-scroll-target="#within-person-effect-of-diversity">Within-person effect of diversity</a></li>
+  <li><a href="#ame-of-diversity-we-by-mobility-trajectory-hlm-2" id="toc-ame-of-diversity-we-by-mobility-trajectory-hlm-2" class="nav-link" data-scroll-target="#ame-of-diversity-we-by-mobility-trajectory-hlm-2">AME of diversity (WE) by mobility trajectory (HLM 2)</a></li>
+  <li><a href="#table" id="toc-table" class="nav-link" data-scroll-target="#table">Table</a></li>
+  </ul></li>
+  <li><a href="#step-7.-how-stable-are-networks-between-waves" id="toc-step-7.-how-stable-are-networks-between-waves" class="nav-link" data-scroll-target="#step-7.-how-stable-are-networks-between-waves">Step 7. How stable are networks between waves?</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Longer panel with last observation carried forward (robustness check, Study 2)</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Julio César Iturra-Sanhueza </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 25, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="setup" class="level2">
+<h2 class="anchored" data-anchor-id="setup">Setup</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>set1 <span class="ot">&lt;-</span> RColorBrewer<span class="sc">::</span><span class="fu">brewer.pal</span>(<span class="at">n =</span> <span class="dv">8</span>, <span class="at">name =</span> <span class="st">"Set1"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">ggplot2.discrete.fill =</span> set1)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">ggplot2.discrete.colour =</span> set1)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>ggplot2<span class="sc">::</span><span class="fu">theme_set</span>(ggplot2<span class="sc">::</span><span class="fu">theme_bw</span>())</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>ggplot2<span class="sc">::</span><span class="fu">theme_update</span>(<span class="at">text =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">15</span>, <span class="at">family =</span> <span class="st">"serif"</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen =</span> <span class="dv">999</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">"pacman"</span>)) <span class="fu">install.packages</span>(<span class="st">"pacman"</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(dplyr, tidyr, lme4, plm, fixest, ggplot2, ggtext, scales, texreg)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="purpose" class="level2">
+<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<p>ELSOC measures occupation and the position generator only in 2016, 2018, 2021, and 2023 (waves 1, 3, 5, 7). Market justice preferences are measured in every wave except 2021. The main analysis therefore uses three waves with complete information (2016, 2018, 2023).</p>
+<p>This document extends the panel with the waves that measure market justice but not networks or occupation (2017, 2019, 2022; waves 2, 4, 6). In each of these waves, network and occupational variables are taken from the immediately preceding wave (last observation carried forward, LOCF).</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Wave with market justice</th>
+<th>Networks and occupation taken from</th>
+<th>Lag</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2016 (w1)</td>
+<td>2016 (w1)</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>2017 (w2)</td>
+<td>2016 (w1)</td>
+<td>1 year</td>
+</tr>
+<tr class="odd">
+<td>2018 (w3)</td>
+<td>2018 (w3)</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>2019 (w4)</td>
+<td>2018 (w3)</td>
+<td>1 year</td>
+</tr>
+<tr class="odd">
+<td>2022 (w6)</td>
+<td>2021 (w5)</td>
+<td>1 year</td>
+</tr>
+<tr class="even">
+<td>2023 (w7)</td>
+<td>2023 (w7)</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Three samples are compared.</p>
+<ul>
+<li><strong>A. Original.</strong> Waves 1, 3, and 7, as in the paper (6,574 observations, 2,872 individuals).</li>
+<li><strong>B. LOCF.</strong> Waves 1, 2, 3, 4, 6, and 7. A carried row is used only if the respondent was interviewed in the immediately preceding wave.</li>
+<li><strong>C. LOCF, stable labor status.</strong> Same as B, but carried rows are dropped when the respondent’s labor status (<code>m02</code>, employed = codes 1 to 3) changed between the previous wave and the current wave. This is a rough guard against carrying forward an occupation or a network that has probably changed.</li>
+</ul>
+<p><strong>What LOCF assumes.</strong> Networks and occupation do not change in the year after they were measured. Within-person change in diversity can therefore only appear in the waves where networks are measured. Carried rows add information on the outcome but no new information on diversity, so standard errors in B and C are probably too small. The mobility trajectories (<code>mobility_cat_adj_isco3</code>) are person-level and are taken unchanged from the main analysis, so they are not affected by LOCF.</p>
+</section>
+<section id="step-1.-load-the-data" class="level2">
+<h2 class="anchored" data-anchor-id="step-1.-load-the-data">Step 1. Load the data</h2>
+<p><code>df1</code> is the panel saved in <code>00-main_analysis.Rmd</code> before <code>na.omit()</code> (waves 1, 3, 5, 7). The even waves are taken from <code>study2.RData</code>, the same source used to build <code>df1</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"input/data/proc/df1_panel_for_mice.RData"</span>))   <span class="co"># df1</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df1 <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(df1)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"input/data/proc/study2.RData"</span>))               <span class="co"># elsoc_long</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>elsoc_long <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(elsoc_long)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(df1<span class="sc">$</span>ola)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+   1    3    5    7 
+2927 2229 1739 1737 </code></pre>
+</div>
+</div>
+</section>
+<section id="step-2.-build-the-even-wave-rows" class="level2">
+<h2 class="anchored" data-anchor-id="step-2.-build-the-even-wave-rows">Step 2. Build the even-wave rows</h2>
+<p>Market justice is built as in <code>00-main_analysis.Rmd</code> (mean of the three items). The variables that are measured in every wave (sex, age, labor status, weights) are taken from the even wave itself. Network diversity, occupation, and partner are taken from the previous wave. Partner is carried forward because it is not measured in 2017.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>even <span class="ot">&lt;-</span> elsoc_long <span class="sc">%&gt;%</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ola <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>), muestra <span class="sc">==</span> <span class="dv">1</span>, idencuesta <span class="sc">!=</span> <span class="dv">3577497540</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(<span class="at">id =</span> idencuesta, ola, muestra,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">atricion =</span> tipo_atricion,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>            just_educ, just_salud, just_pension,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">market =</span> <span class="fu">rowMeans</span>(<span class="fu">cbind</span>(just_educ, just_salud, just_pension), <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">age =</span> m0_edad, <span class="at">sex =</span> sexo_fx, m02,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">weights1 =</span> ponderador_long_total, ponderador02,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">partner_own =</span> partner) <span class="sc">%&gt;%</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">market =</span> <span class="fu">ifelse</span>(<span class="fu">is.nan</span>(market), <span class="cn">NA</span>, market)) <span class="sc">%&gt;%</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(age <span class="sc">&gt;=</span> <span class="dv">15</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Time-varying variables carried forward from the previous wave</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>vars_carry <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"n_total"</span>, <span class="st">"isei_avg"</span>, <span class="st">"entropy_contacts"</span>, <span class="st">"know_total"</span>, <span class="st">"crossclass"</span>, <span class="st">"strong_tie"</span>,</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>                <span class="st">"isei_c"</span>, <span class="st">"isco03_neet"</span>, <span class="st">"isco08_1lvl"</span>, <span class="st">"partner"</span>, <span class="st">"m02"</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>prev <span class="ot">&lt;-</span> df1 <span class="sc">%&gt;%</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ola <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, ola, <span class="fu">all_of</span>(vars_carry)) <span class="sc">%&gt;%</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">m02_prev =</span> m02) <span class="sc">%&gt;%</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ola =</span> ola <span class="sc">+</span> <span class="dv">1</span>)                       <span class="co"># w1 -&gt; w2, w3 -&gt; w4, w5 -&gt; w6</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Person-level variables (constant within individuals)</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>vars_person <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"migrationw1"</span>, <span class="st">"parenteducw1"</span>, <span class="st">"isco_father"</span>,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"mobility_cat_adj_isco3"</span>, <span class="st">"mobility_cat_unadj"</span>, <span class="st">"mobility_cat_adj_isco3b"</span>,</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"mobility_cat_adj_isco3c"</span>, <span class="st">"mobility_cat_adj_isco3d"</span>, <span class="st">"mobility_cat_adj_egp3"</span>, <span class="st">"moves"</span>)</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>person <span class="ot">&lt;-</span> df1 <span class="sc">%&gt;%</span> <span class="fu">select</span>(id, <span class="fu">all_of</span>(vars_person)) <span class="sc">%&gt;%</span> <span class="fu">distinct</span>()</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyDuplicated</span>(person<span class="sc">$</span>id))</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>even <span class="ot">&lt;-</span> even <span class="sc">%&gt;%</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(prev, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"id"</span>, <span class="st">"ola"</span>)) <span class="sc">%&gt;%</span>   <span class="co"># keeps only respondents interviewed in the previous wave</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(person, <span class="at">by =</span> <span class="st">"id"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">employed      =</span> <span class="fu">as.numeric</span>(m02 <span class="sc">%in%</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>),</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>         <span class="at">employed_prev =</span> <span class="fu">as.numeric</span>(m02_prev <span class="sc">%in%</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>),</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>         <span class="at">lfs_change    =</span> <span class="fu">as.numeric</span>(employed <span class="sc">!=</span> employed_prev),</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>         <span class="at">locf =</span> <span class="dv">1</span>)</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Respondents in the even waves, and how many have a previous-wave interview</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>  <span class="at">wave =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>),</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>  <span class="at">interviewed =</span> <span class="fu">as.numeric</span>(<span class="fu">table</span>(<span class="fu">factor</span>(elsoc_long<span class="sc">$</span>ola[elsoc_long<span class="sc">$</span>ola <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>) <span class="sc">&amp;</span> elsoc_long<span class="sc">$</span>muestra <span class="sc">==</span> <span class="dv">1</span>], <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>)))),</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>  <span class="at">with_previous_wave =</span> <span class="fu">as.numeric</span>(<span class="fu">table</span>(<span class="fu">factor</span>(even<span class="sc">$</span>ola, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>)))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">wave</th>
+<th style="text-align: right;">interviewed</th>
+<th style="text-align: right;">with_previous_wave</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2473</td>
+<td style="text-align: right;">2473</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2153</td>
+<td style="text-align: right;">1997</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">1728</td>
+<td style="text-align: right;">1450</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Labor status change between the previous and the current wave</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="at">wave =</span> even<span class="sc">$</span>ola, <span class="at">labor_status_change =</span> even<span class="sc">$</span>lfs_change)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    labor_status_change
+wave    0    1
+   2 2064  409
+   4 1654  343
+   6 1183  267</code></pre>
+</div>
+</div>
+</section>
+<section id="step-3.-stack-the-panel" class="level2">
+<h2 class="anchored" data-anchor-id="step-3.-stack-the-panel">Step 3. Stack the panel</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>odd <span class="ot">&lt;-</span> df1 <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">locf =</span> <span class="dv">0</span>, <span class="at">lfs_change =</span> <span class="dv">0</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>panel_long <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(odd, even <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>partner_own, <span class="sc">-</span>m02_prev, <span class="sc">-</span>employed, <span class="sc">-</span>employed_prev)) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(id, ola) <span class="sc">%&gt;%</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">time =</span> ola)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(panel_long<span class="sc">$</span>ola, panel_long<span class="sc">$</span>locf)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   
+       0    1
+  1 2927    0
+  2    0 2473
+  3 2229    0
+  4    0 1997
+  5 1739    0
+  6    0 1450
+  7 1737    0</code></pre>
+</div>
+</div>
+</section>
+<section id="step-4.-analytical-samples" class="level2">
+<h2 class="anchored" data-anchor-id="step-4.-analytical-samples">Step 4. Analytical samples</h2>
+<p>The exclusion of armed forces, <code>select()</code>, and <code>na.omit()</code> follow the <code>prep-analysis-data</code> chunk of <code>00-main_analysis.Rmd</code>. Armed forces are identified in the odd waves, as in the paper.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>militares <span class="ot">&lt;-</span> df1 <span class="sc">%&gt;%</span> <span class="fu">filter</span>(isco08_1lvl <span class="sc">==</span> <span class="st">"0000"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(id) <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>vars_paper <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"id"</span>, <span class="st">"time"</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"market"</span>, <span class="st">"just_educ"</span>, <span class="st">"just_salud"</span>, <span class="st">"just_pension"</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"n_total"</span>, <span class="st">"isei_avg"</span>, <span class="st">"entropy_contacts"</span>, <span class="st">"know_total"</span>, <span class="st">"crossclass"</span>, <span class="st">"strong_tie"</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"sex"</span>, <span class="st">"age"</span>, <span class="st">"parenteducw1"</span>, <span class="st">"migrationw1"</span>, <span class="st">"isco_father"</span>, <span class="st">"partner"</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"isei_c"</span>, <span class="st">"isco03_neet"</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mobility_cat_adj_isco3"</span>, <span class="st">"mobility_cat_unadj"</span>, <span class="st">"mobility_cat_adj_isco3b"</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mobility_cat_adj_isco3c"</span>, <span class="st">"mobility_cat_adj_isco3d"</span>, <span class="st">"mobility_cat_adj_egp3"</span>, <span class="st">"moves"</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ponderador02"</span>, <span class="st">"weights1"</span>, <span class="st">"atricion"</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>make_sample <span class="ot">&lt;-</span> <span class="cf">function</span>(d) {</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  d <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>id <span class="sc">%in%</span> militares) <span class="sc">%&gt;%</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">all_of</span>(vars_paper), locf, lfs_change) <span class="sc">%&gt;%</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">na.omit</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.data.frame</span>()</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>samples <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">A =</span> <span class="fu">make_sample</span>(panel_long <span class="sc">%&gt;%</span> <span class="fu">filter</span>(ola <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>))),</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">B =</span> <span class="fu">make_sample</span>(panel_long),</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">C =</span> <span class="fu">make_sample</span>(panel_long <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(locf <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> lfs_change <span class="sc">==</span> <span class="dv">1</span>))))</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Sample A must reproduce the paper</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nrow</span>(samples<span class="sc">$</span>A) <span class="sc">==</span> <span class="dv">6574</span>, <span class="fu">n_distinct</span>(samples<span class="sc">$</span>A<span class="sc">$</span>id) <span class="sc">==</span> <span class="dv">2872</span>)</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>(samples, <span class="cf">function</span>(d) <span class="fu">c</span>(<span class="at">observations =</span> <span class="fu">nrow</span>(d), <span class="at">individuals =</span> <span class="fu">n_distinct</span>(d<span class="sc">$</span>id),</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>                              <span class="at">carried_rows =</span> <span class="fu">sum</span>(d<span class="sc">$</span>locf)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                A     B     C
+observations 6574 12238 11266
+individuals  2872  2875  2875
+carried_rows    0  5664  4692</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">lapply</span>(samples, <span class="cf">function</span>(d) <span class="fu">table</span>(d<span class="sc">$</span>time))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$A
+
+   1    3    7 
+2744 2139 1691 
+
+$B
+
+   1    2    3    4    6    7 
+2744 2320 2139 1925 1419 1691 
+
+$C
+
+   1    2    3    4    6    7 
+2744 1938 2139 1598 1156 1691 </code></pre>
+</div>
+</div>
+<section id="mobility-trajectories-are-not-recomputed" class="level3">
+<h3 class="anchored" data-anchor-id="mobility-trajectories-are-not-recomputed">Mobility trajectories are not recomputed</h3>
+<p>The mobility trajectories (<code>mobility_cat_adj_isco3</code> and the alternatives B, C, D, and EGP) are person-level variables. They are built in <code>00-main_analysis.Rmd</code> from the waves in which occupation is actually measured (2016, 2018, 2021, and 2023) and are joined here by <code>id</code>. Every respondent therefore keeps the same trajectory in samples A, B, and C. They are deliberately not recomputed with the carried rows, for two reasons.</p>
+<ol type="1">
+<li><strong>First and last positions would not change.</strong> A carried row copies the position of the previous wave, so it never adds a new position. The first position is still the one observed in 2016. The last position is also the same: if a respondent’s last row is a carried 2022 row, its value is the one observed in 2021.</li>
+<li><strong>The 75% rule would change artificially.</strong> The adjustment that reclassifies some mobile respondents as stable uses the number of observations (at least 3) and the share of observations in each position. Carried rows duplicate positions that were already observed. They would inflate the number of observations and give extra weight to 2016, 2018, and 2021 only because the respondent was interviewed in the following year. Some respondents would move from <em>Upward</em> or <em>Downward</em> to a stable category without any new information about their occupation.</li>
+</ol>
+<p>Because the classification is fixed, differences between samples A, B, and C cannot come from reclassifying respondents. They come only from the added rows, where market justice is observed and network diversity is carried forward. The table below shows that the composition by trajectory barely changes. Samples B and C include only 3 more respondents than sample A, who have complete information on market justice only in an even wave.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>recode_profile <span class="ot">&lt;-</span> <span class="cf">function</span>(x) car<span class="sc">::</span><span class="fu">recode</span>(<span class="fu">as.character</span>(x),</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"c('Downward (Any to NEET)','Downward (H to L)','Downward (H to M)','Downward (M to L)')='Downward';</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="st">   c('Upward (L to H)','Upward (L to M)','Upward (M to H)','Upward (NEET to Any)')='Upward'"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>traj_by_sample <span class="ot">&lt;-</span> <span class="fu">sapply</span>(samples, <span class="cf">function</span>(d) {</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> d[<span class="sc">!</span><span class="fu">duplicated</span>(d<span class="sc">$</span>id), ]</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">table</span>(<span class="fu">factor</span>(<span class="fu">recode_profile</span>(p<span class="sc">$</span>mobility_cat_adj_isco3),</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Stable: NEET"</span>, <span class="st">"Stable: low"</span>, <span class="st">"Stable: middle"</span>, <span class="st">"Stable: high"</span>, <span class="st">"Upward"</span>, <span class="st">"Downward"</span>)))</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="fu">addmargins</span>(traj_by_sample, <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                  A    B    C
+Stable: NEET    908  909  909
+Stable: low     124  125  125
+Stable: middle  775  775  775
+Stable: high    315  315  315
+Upward          401  401  401
+Downward        349  350  350
+Sum            2872 2875 2875</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Every respondent has the same trajectory in all samples</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>traj_A <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">as.character</span>(samples<span class="sc">$</span>A<span class="sc">$</span>mobility_cat_adj_isco3), samples<span class="sc">$</span>A<span class="sc">$</span>id)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>traj_B <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">as.character</span>(samples<span class="sc">$</span>B<span class="sc">$</span>mobility_cat_adj_isco3), samples<span class="sc">$</span>B<span class="sc">$</span>id)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>common <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">names</span>(traj_A), <span class="fu">names</span>(traj_B))</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(traj_A[common] <span class="sc">==</span> traj_B[common]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="step-5.-analysis-variables" class="level2">
+<h2 class="anchored" data-anchor-id="step-5.-analysis-variables">Step 5. Analysis variables</h2>
+<p>As in <code>00-main_analysis.Rmd</code>: weighted PCA diversity index, standardized dependent variable, person means and deviations. The PCA and the standardization are computed in each sample.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>prep <span class="ot">&lt;-</span> <span class="cf">function</span>(d) {</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  pca <span class="ot">&lt;-</span> psych<span class="sc">::</span><span class="fu">pca</span>(<span class="at">r =</span> d <span class="sc">%&gt;%</span> <span class="fu">select</span>(entropy_contacts, know_total, crossclass),</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">nfactors =</span> <span class="dv">1</span>, <span class="at">rotate =</span> <span class="st">"oblimin"</span>, <span class="at">scores =</span> <span class="cn">TRUE</span>, <span class="at">missing =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">cor =</span> <span class="st">"cor"</span>, <span class="at">weight =</span> d<span class="sc">$</span>ponderador02)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>diversityclass <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(pca<span class="sc">$</span>scores)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>mobility_profile <span class="ot">&lt;-</span> car<span class="sc">::</span><span class="fu">recode</span>(<span class="fu">as.character</span>(d<span class="sc">$</span>mobility_cat_adj_isco3),</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"c('Downward (Any to NEET)','Downward (H to L)','Downward (H to M)','Downward (M to L)')='Downward';</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="st">     c('Upward (L to H)','Upward (L to M)','Upward (M to H)','Upward (NEET to Any)')='Upward'"</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>mobility_profile  <span class="ot">&lt;-</span> <span class="fu">relevel</span>(<span class="fu">factor</span>(d<span class="sc">$</span>mobility_profile), <span class="at">ref =</span> <span class="st">"Stable: low"</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>parenteducw1      <span class="ot">&lt;-</span> <span class="fu">factor</span>(d<span class="sc">$</span>parenteducw1, <span class="at">ordered =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>migrationw1       <span class="ot">&lt;-</span> <span class="fu">factor</span>(d<span class="sc">$</span>migrationw1, <span class="at">ordered =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>wave              <span class="ot">&lt;-</span> d<span class="sc">$</span>time                 <span class="co"># numeric panel index for plm</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>time              <span class="ot">&lt;-</span> <span class="fu">factor</span>(d<span class="sc">$</span>time)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>market1           <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">scale</span>(d<span class="sc">$</span>market))</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>diversityclass_gm <span class="ot">&lt;-</span> <span class="fu">ave</span>(d<span class="sc">$</span>diversityclass, d<span class="sc">$</span>id, <span class="at">FUN =</span> mean)</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>partner_gm        <span class="ot">&lt;-</span> <span class="fu">ave</span>(d<span class="sc">$</span>partner, d<span class="sc">$</span>id, <span class="at">FUN =</span> mean)</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">$</span>diversityclass_gc <span class="ot">&lt;-</span> d<span class="sc">$</span>diversityclass <span class="sc">-</span> d<span class="sc">$</span>diversityclass_gm</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">attr</span>(d, <span class="st">"loadings"</span>) <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">as.numeric</span>(pca<span class="sc">$</span>loadings), <span class="dv">3</span>)</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  d</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>samples <span class="ot">&lt;-</span> <span class="fu">lapply</span>(samples, prep)</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a><span class="co"># PCA loadings (entropy, know_total, crossclass)</span></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>(samples, attr, <span class="st">"loadings"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         A     B     C
+[1,] 0.976 0.976 0.976
+[2,] 0.942 0.942 0.942
+[3,] 0.882 0.882 0.882</code></pre>
+</div>
+</div>
+</section>
+<section id="step-6.-models" class="level2">
+<h2 class="anchored" data-anchor-id="step-6.-models">Step 6. Models</h2>
+<p>The three models of the paper are estimated in each sample.</p>
+<ul>
+<li><strong>FE.</strong> <code>plm</code> within model, <code>market1 ~ diversityclass + time + partner</code> (weighted), as in the paper.</li>
+<li><strong>FE (clustered).</strong> The same model estimated with <code>fixest::feols()</code> and standard errors clustered by individual. Clustering matters here because carried rows repeat the same value of diversity. <code>plm</code> does not compute clustered errors for weighted models. Without weights, both estimators give identical coefficients. With weights they differ slightly, because <code>plm</code> applies the weights differently in the within transformation.</li>
+<li><strong>HLM 1.</strong> Hybrid random intercept model, additive (weighted).</li>
+<li><strong>HLM 2.</strong> Hybrid random intercept model, diversity (WE) × mobility trajectory (weighted).</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>ctrl <span class="ot">&lt;-</span> <span class="st">"diversityclass_gm + sex + age + parenteducw1 + migrationw1 + partner + partner_gm + time + (1|id)"</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>fit_all <span class="ot">&lt;-</span> <span class="cf">function</span>(d) {</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">fe_cl =</span> fixest<span class="sc">::</span><span class="fu">feols</span>(market1 <span class="sc">~</span> diversityclass <span class="sc">+</span> time <span class="sc">+</span> partner <span class="sc">|</span> id, <span class="at">data =</span> d,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">weights =</span> <span class="sc">~</span>weights1, <span class="at">cluster =</span> <span class="sc">~</span>id),</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">fe   =</span> <span class="fu">plm</span>(market1 <span class="sc">~</span> diversityclass <span class="sc">+</span> time <span class="sc">+</span> partner, <span class="at">data =</span> d, <span class="at">index =</span> <span class="fu">c</span>(<span class="st">"id"</span>, <span class="st">"wave"</span>),</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">weights =</span> weights1, <span class="at">model =</span> <span class="st">"within"</span>),</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">hlm1 =</span> <span class="fu">lmer</span>(<span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="st">"market1 ~ diversityclass_gc + mobility_profile +"</span>, ctrl)),</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>                <span class="at">data =</span> d, <span class="at">weights =</span> weights1),</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">hlm2 =</span> <span class="fu">lmer</span>(<span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="st">"market1 ~ diversityclass_gc*mobility_profile +"</span>, ctrl)),</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>                <span class="at">data =</span> d, <span class="at">weights =</span> weights1))</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>mods <span class="ot">&lt;-</span> <span class="fu">lapply</span>(samples, fit_all)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Check: sample A reproduces Table S4 (diversity 0.091, Diversity x Stable: high -0.285)</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">fixef</span>(mods<span class="sc">$</span>A<span class="sc">$</span>hlm2)[<span class="fu">c</span>(<span class="st">"diversityclass_gc"</span>, <span class="st">"diversityclass_gc:mobility_profileStable: high"</span>)], <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                             diversityclass_gc 
+                                         0.091 
+diversityclass_gc:mobility_profileStable: high 
+                                        -0.285 </code></pre>
+</div>
+</div>
+<section id="within-person-effect-of-diversity" class="level3">
+<h3 class="anchored" data-anchor-id="within-person-effect-of-diversity">Within-person effect of diversity</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>row_plm <span class="ot">&lt;-</span> <span class="cf">function</span>(m) {</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">summary</span>(m)<span class="sc">$</span>coefficients[<span class="st">"diversityclass"</span>, ]</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">est =</span> s[[<span class="dv">1</span>]], <span class="at">se =</span> s[[<span class="dv">2</span>]], <span class="at">p =</span> s[[<span class="dv">4</span>]])</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>row_feols <span class="ot">&lt;-</span> <span class="cf">function</span>(m) {</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">est =</span> <span class="fu">coef</span>(m)[[<span class="st">"diversityclass"</span>]], <span class="at">se =</span> fixest<span class="sc">::</span><span class="fu">se</span>(m)[[<span class="st">"diversityclass"</span>]],</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>             <span class="at">p =</span> fixest<span class="sc">::</span><span class="fu">pvalue</span>(m)[[<span class="st">"diversityclass"</span>]])</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>row_hlm <span class="ot">&lt;-</span> <span class="cf">function</span>(m) {</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">summary</span>(m)<span class="sc">$</span>coefficients[<span class="st">"diversityclass_gc"</span>, ]</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">est =</span> s[[<span class="st">"Estimate"</span>]], <span class="at">se =</span> s[[<span class="st">"Std. Error"</span>]], <span class="at">p =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(s[[<span class="st">"t value"</span>]])))</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>tab_main <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="fu">lapply</span>(<span class="fu">names</span>(mods), <span class="cf">function</span>(s) <span class="fu">bind_rows</span>(</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="at">sample =</span> s, <span class="at">model =</span> <span class="st">"FE (plm, paper)"</span>,       <span class="fu">row_plm</span>(mods[[s]]<span class="sc">$</span>fe)),</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="at">sample =</span> s, <span class="at">model =</span> <span class="st">"FE (fixest, clustered)"</span>, <span class="fu">row_feols</span>(mods[[s]]<span class="sc">$</span>fe_cl)),</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="at">sample =</span> s, <span class="at">model =</span> <span class="st">"HLM 1 (WE)"</span>,            <span class="fu">row_hlm</span>(mods[[s]]<span class="sc">$</span>hlm1)))))</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>tab_main <span class="sc">%&gt;%</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">round</span>(.x, <span class="dv">3</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> sample, <span class="at">values_from =</span> <span class="fu">c</span>(est, se, p))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 28%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">model</th>
+<th style="text-align: right;">est_A</th>
+<th style="text-align: right;">est_B</th>
+<th style="text-align: right;">est_C</th>
+<th style="text-align: right;">se_A</th>
+<th style="text-align: right;">se_B</th>
+<th style="text-align: right;">se_C</th>
+<th style="text-align: right;">p_A</th>
+<th style="text-align: right;">p_B</th>
+<th style="text-align: right;">p_C</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">FE (plm, paper)</td>
+<td style="text-align: right;">-0.065</td>
+<td style="text-align: right;">-0.078</td>
+<td style="text-align: right;">-0.072</td>
+<td style="text-align: right;">0.020</td>
+<td style="text-align: right;">0.014</td>
+<td style="text-align: right;">0.014</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">FE (fixest, clustered)</td>
+<td style="text-align: right;">-0.070</td>
+<td style="text-align: right;">-0.080</td>
+<td style="text-align: right;">-0.074</td>
+<td style="text-align: right;">0.030</td>
+<td style="text-align: right;">0.023</td>
+<td style="text-align: right;">0.024</td>
+<td style="text-align: right;">0.021</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">0.002</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HLM 1 (WE)</td>
+<td style="text-align: right;">-0.067</td>
+<td style="text-align: right;">-0.078</td>
+<td style="text-align: right;">-0.074</td>
+<td style="text-align: right;">0.017</td>
+<td style="text-align: right;">0.013</td>
+<td style="text-align: right;">0.013</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="ame-of-diversity-we-by-mobility-trajectory-hlm-2" class="level3">
+<h3 class="anchored" data-anchor-id="ame-of-diversity-we-by-mobility-trajectory-hlm-2">AME of diversity (WE) by mobility trajectory (HLM 2)</h3>
+<p>The AME in each trajectory is the within-person slope of diversity in that group, computed as a linear combination of coefficients (delta method), as in <code>prod_robustness-time-since-mobility.qmd</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>ame_lc <span class="ot">&lt;-</span> <span class="cf">function</span>(m, w) {</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> <span class="fu">fixef</span>(m); V <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(<span class="fu">vcov</span>(m))</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  L <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">length</span>(b)), <span class="fu">names</span>(b)); L[<span class="fu">names</span>(w)] <span class="ot">&lt;-</span> <span class="fu">unlist</span>(w)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  est <span class="ot">&lt;-</span> <span class="fu">sum</span>(L <span class="sc">*</span> b); se <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">drop</span>(<span class="fu">t</span>(L) <span class="sc">%*%</span> V <span class="sc">%*%</span> L))</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">AME =</span> est, <span class="at">SE =</span> se, <span class="at">lo =</span> est <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se, <span class="at">hi =</span> est <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se, <span class="at">p =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(est <span class="sc">/</span> se)))</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>profiles <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Stable: NEET"</span>, <span class="st">"Stable: low"</span>, <span class="st">"Stable: middle"</span>, <span class="st">"Downward"</span>, <span class="st">"Upward"</span>, <span class="st">"Stable: high"</span>)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>ame_profile <span class="ot">&lt;-</span> <span class="cf">function</span>(m) {</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(profiles, <span class="cf">function</span>(k) {</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    w <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">diversityclass_gc =</span> <span class="dv">1</span>)</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (k <span class="sc">!=</span> <span class="st">"Stable: low"</span>) w[[<span class="fu">paste0</span>(<span class="st">"diversityclass_gc:mobility_profile"</span>, k)]] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cbind</span>(<span class="at">mobility_profile =</span> k, <span class="fu">ame_lc</span>(m, w))</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  }))</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>sample_labels <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">A =</span> <span class="st">"A. Original (2016, 2018, 2023)"</span>,</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>                   <span class="at">B =</span> <span class="st">"B. LOCF (2016-2019, 2022, 2023)"</span>,</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>                   <span class="at">C =</span> <span class="st">"C. LOCF, stable labor status"</span>)</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>ame_all <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="fu">lapply</span>(<span class="fu">names</span>(mods), <span class="cf">function</span>(s) <span class="fu">cbind</span>(<span class="at">sample =</span> sample_labels[[s]], <span class="fu">ame_profile</span>(mods[[s]]<span class="sc">$</span>hlm2))))</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>ame_all<span class="sc">$</span>mobility_profile <span class="ot">&lt;-</span> <span class="fu">factor</span>(ame_all<span class="sc">$</span>mobility_profile, <span class="at">levels =</span> profiles)</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>ame_all <span class="sc">%&gt;%</span></span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(sample, mobility_profile, AME, SE, p) <span class="sc">%&gt;%</span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> sample, <span class="at">values_from =</span> <span class="fu">c</span>(AME, SE, p)) <span class="sc">%&gt;%</span></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">round</span>(.x, <span class="dv">3</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 10%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">mobility_profile</th>
+<th style="text-align: right;">AME_A. Original (2016, 2018, 2023)</th>
+<th style="text-align: right;">AME_B. LOCF (2016-2019, 2022, 2023)</th>
+<th style="text-align: right;">AME_C. LOCF, stable labor status</th>
+<th style="text-align: right;">SE_A. Original (2016, 2018, 2023)</th>
+<th style="text-align: right;">SE_B. LOCF (2016-2019, 2022, 2023)</th>
+<th style="text-align: right;">SE_C. LOCF, stable labor status</th>
+<th style="text-align: right;">p_A. Original (2016, 2018, 2023)</th>
+<th style="text-align: right;">p_B. LOCF (2016-2019, 2022, 2023)</th>
+<th style="text-align: right;">p_C. LOCF, stable labor status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Stable: NEET</td>
+<td style="text-align: right;">-0.038</td>
+<td style="text-align: right;">-0.062</td>
+<td style="text-align: right;">-0.036</td>
+<td style="text-align: right;">0.029</td>
+<td style="text-align: right;">0.022</td>
+<td style="text-align: right;">0.023</td>
+<td style="text-align: right;">0.195</td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">0.116</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Stable: low</td>
+<td style="text-align: right;">0.091</td>
+<td style="text-align: right;">0.050</td>
+<td style="text-align: right;">0.049</td>
+<td style="text-align: right;">0.068</td>
+<td style="text-align: right;">0.053</td>
+<td style="text-align: right;">0.055</td>
+<td style="text-align: right;">0.182</td>
+<td style="text-align: right;">0.344</td>
+<td style="text-align: right;">0.374</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Stable: middle</td>
+<td style="text-align: right;">-0.001</td>
+<td style="text-align: right;">-0.052</td>
+<td style="text-align: right;">-0.038</td>
+<td style="text-align: right;">0.035</td>
+<td style="text-align: right;">0.026</td>
+<td style="text-align: right;">0.027</td>
+<td style="text-align: right;">0.980</td>
+<td style="text-align: right;">0.050</td>
+<td style="text-align: right;">0.161</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Downward</td>
+<td style="text-align: right;">-0.150</td>
+<td style="text-align: right;">-0.056</td>
+<td style="text-align: right;">-0.075</td>
+<td style="text-align: right;">0.041</td>
+<td style="text-align: right;">0.030</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.063</td>
+<td style="text-align: right;">0.017</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Upward</td>
+<td style="text-align: right;">-0.130</td>
+<td style="text-align: right;">-0.138</td>
+<td style="text-align: right;">-0.165</td>
+<td style="text-align: right;">0.039</td>
+<td style="text-align: right;">0.029</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Stable: high</td>
+<td style="text-align: right;">-0.194</td>
+<td style="text-align: right;">-0.248</td>
+<td style="text-align: right;">-0.253</td>
+<td style="text-align: right;">0.059</td>
+<td style="text-align: right;">0.046</td>
+<td style="text-align: right;">0.047</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ame_all, <span class="fu">aes</span>(<span class="at">x =</span> mobility_profile, <span class="at">y =</span> AME, <span class="at">color =</span> sample, <span class="at">shape =</span> sample)) <span class="sc">+</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> lo, <span class="at">ymax =</span> hi), <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.6</span>),</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">size =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"black"</span>, set1[<span class="dv">2</span>], set1[<span class="dv">1</span>])) <span class="sc">+</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"AME of network diversity (WE)"</span>, <span class="at">color =</span> <span class="cn">NULL</span>, <span class="at">shape =</span> <span class="cn">NULL</span>,</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="fu">paste0</span>(<span class="st">"*Note*: 95% CIs. Weighted hierarchical linear models (HLM).&lt;br&gt;"</span>,</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"N: A = "</span>, <span class="fu">nobs</span>(mods<span class="sc">$</span>A<span class="sc">$</span>hlm2), <span class="st">", B = "</span>, <span class="fu">nobs</span>(mods<span class="sc">$</span>B<span class="sc">$</span>hlm2), <span class="st">", C = "</span>, <span class="fu">nobs</span>(mods<span class="sc">$</span>C<span class="sc">$</span>hlm2),</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>                        <span class="st">" observations. In B and C, networks in 2017, 2019, and 2022 are carried forward from the previous wave."</span>)) <span class="sc">+</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.caption =</span> <span class="fu">element_markdown</span>(<span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">size =</span> <span class="dv">11</span>, <span class="at">family =</span> <span class="st">"serif"</span>),</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">"bottom"</span>, <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="prod_robustness-locf_files/figure-html/plot-ame-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">plot =</span> <span class="fu">last_plot</span>(), <span class="at">filename =</span> <span class="st">"figureS_locf_ame.png"</span>, <span class="at">path =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output/images"</span>),</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">width =</span> <span class="fl">1.5</span>, <span class="at">height =</span> <span class="dv">1</span>, <span class="at">scale =</span> <span class="dv">15</span>, <span class="at">device =</span> <span class="st">"png"</span>, <span class="at">units =</span> <span class="st">"cm"</span>, <span class="at">dpi =</span> <span class="st">"retina"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="table" class="level3">
+<h3 class="anchored" data-anchor-id="table">Table</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>var_labels_locf <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"diversityclass"</span>    <span class="ot">=</span> <span class="st">"Network diversity"</span>,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"diversityclass_gc"</span> <span class="ot">=</span> <span class="st">"Network diversity (WE)"</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"diversityclass_gm"</span> <span class="ot">=</span> <span class="st">"Network diversity (BE)"</span>,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mobility_profileStable: NEET"</span>   <span class="ot">=</span> <span class="st">"Stable: NEET (ref.=Stable: low)"</span>,</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mobility_profileStable: middle"</span> <span class="ot">=</span> <span class="st">"Stable: middle"</span>,</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mobility_profileStable: high"</span>   <span class="ot">=</span> <span class="st">"Stable: high"</span>,</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mobility_profileDownward"</span>       <span class="ot">=</span> <span class="st">"Downward"</span>,</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mobility_profileUpward"</span>         <span class="ot">=</span> <span class="st">"Upward"</span>,</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"diversityclass_gc:mobility_profileStable: NEET"</span>   <span class="ot">=</span> <span class="st">"Diversity × Stable: NEET"</span>,</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"diversityclass_gc:mobility_profileStable: middle"</span> <span class="ot">=</span> <span class="st">"Diversity × Stable: middle"</span>,</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"diversityclass_gc:mobility_profileStable: high"</span>   <span class="ot">=</span> <span class="st">"Diversity × Stable: high"</span>,</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"diversityclass_gc:mobility_profileDownward"</span>       <span class="ot">=</span> <span class="st">"Diversity × Downward"</span>,</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"diversityclass_gc:mobility_profileUpward"</span>         <span class="ot">=</span> <span class="st">"Diversity × Upward"</span>,</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"partner"</span> <span class="ot">=</span> <span class="st">"Has partner (ref.=No)"</span>,</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"time2"</span> <span class="ot">=</span> <span class="st">"2017 (ref.=2016)"</span>, <span class="st">"time3"</span> <span class="ot">=</span> <span class="st">"2018"</span>, <span class="st">"time4"</span> <span class="ot">=</span> <span class="st">"2019"</span>,</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"time6"</span> <span class="ot">=</span> <span class="st">"2022"</span>, <span class="st">"time7"</span> <span class="ot">=</span> <span class="st">"2023"</span>,</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"(Intercept)"</span> <span class="ot">=</span> <span class="st">"Constant"</span>)</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>mod_list <span class="ot">&lt;-</span> <span class="fu">list</span>(mods<span class="sc">$</span>A<span class="sc">$</span>fe, mods<span class="sc">$</span>B<span class="sc">$</span>fe, mods<span class="sc">$</span>C<span class="sc">$</span>fe, mods<span class="sc">$</span>A<span class="sc">$</span>hlm2, mods<span class="sc">$</span>B<span class="sc">$</span>hlm2, mods<span class="sc">$</span>C<span class="sc">$</span>hlm2)</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a><span class="fu">htmlreg</span>(mod_list,</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">stars =</span> <span class="fu">c</span>(<span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="fl">0.1</span>), <span class="at">caption.above =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Table S15. Market justice preferences and network diversity with a longer panel (last observation carried forward)"</span>,</span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">custom.model.names =</span> <span class="fu">c</span>(<span class="st">"FE (A)"</span>, <span class="st">"FE (B)"</span>, <span class="st">"FE (C)"</span>, <span class="st">"HLM (A)"</span>, <span class="st">"HLM (B)"</span>, <span class="st">"HLM (C)"</span>),</span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">custom.coef.map =</span> var_labels_locf,</span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">custom.gof.rows =</span> <span class="fu">list</span>(<span class="st">"Sample"</span> <span class="ot">=</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"Original"</span>, <span class="st">"LOCF"</span>, <span class="st">"LOCF, stable LFS"</span>), <span class="dv">2</span>),</span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Controls"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">"No"</span>, <span class="dv">3</span>), <span class="fu">rep</span>(<span class="st">"Yes"</span>, <span class="dv">3</span>))),</span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">include.aic =</span> <span class="cn">FALSE</span>, <span class="at">include.loglik =</span> <span class="cn">FALSE</span>, <span class="at">include.rsquared =</span> <span class="cn">FALSE</span>, <span class="at">include.adjrs =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">custom.note =</span> <span class="fu">paste0</span>(</span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"%stars. FE, within models estimated with plm, as in the paper. HLM, hybrid random intercept models (REML). All models weighted.&lt;br&gt;Standard errors clustered by individual for the FE models are reported in the comparison table of the document.&lt;br&gt;"</span>,</span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"A: waves 2016, 2018, and 2023. B: adds 2017, 2019, and 2022, with networks, occupation, and partner carried forward from the previous wave (2016, 2018, and 2021).&lt;br&gt;"</span>,</span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"C: same as B, excluding carried rows where labor status changed since the previous wave. The dependent variable is standardized (z-score)."</span>),</span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output/tables/table_locf.html"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="step-7.-how-stable-are-networks-between-waves" class="level2">
+<h2 class="anchored" data-anchor-id="step-7.-how-stable-are-networks-between-waves">Step 7. How stable are networks between waves?</h2>
+<p>LOCF is more credible when diversity changes little from one wave to the next. The correlation of each component within respondents across consecutive network waves gives an upper bound on the error, since the gap here is two or three years and the carried gap is one year.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>stab <span class="ot">&lt;-</span> df1 <span class="sc">%&gt;%</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>id <span class="sc">%in%</span> militares) <span class="sc">%&gt;%</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, ola, entropy_contacts, know_total, crossclass, isco03_neet) <span class="sc">%&gt;%</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(id, ola) <span class="sc">%&gt;%</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(entropy_contacts, know_total, crossclass, isco03_neet), dplyr<span class="sc">::</span>lag, <span class="at">.names =</span> <span class="st">"{.col}_prev"</span>),</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">ola_prev =</span> dplyr<span class="sc">::</span><span class="fu">lag</span>(ola)) <span class="sc">%&gt;%</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(ola_prev), ola <span class="sc">-</span> ola_prev <span class="sc">==</span> <span class="dv">2</span>)</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>stab <span class="sc">%&gt;%</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="at">gap =</span> <span class="fu">paste0</span>(<span class="st">"w"</span>, ola_prev, <span class="st">" -&gt; w"</span>, ola)) <span class="sc">%&gt;%</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">r_entropy    =</span> <span class="fu">cor</span>(entropy_contacts, entropy_contacts_prev, <span class="at">use =</span> <span class="st">"complete.obs"</span>),</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">r_know_total =</span> <span class="fu">cor</span>(know_total, know_total_prev, <span class="at">use =</span> <span class="st">"complete.obs"</span>),</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">r_crossclass =</span> <span class="fu">cor</span>(crossclass, crossclass_prev, <span class="at">use =</span> <span class="st">"complete.obs"</span>),</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">occupation_changed =</span> <span class="fu">mean</span>(isco03_neet <span class="sc">!=</span> isco03_neet_prev, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric) <span class="sc">&amp;</span> <span class="sc">!</span>n, <span class="sc">~</span> <span class="fu">round</span>(.x, <span class="dv">3</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 7%">
+<col style="width: 14%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">gap</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">r_entropy</th>
+<th style="text-align: right;">r_know_total</th>
+<th style="text-align: right;">r_crossclass</th>
+<th style="text-align: right;">occupation_changed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">w1 -&gt; w3</td>
+<td style="text-align: right;">2218</td>
+<td style="text-align: right;">0.393</td>
+<td style="text-align: right;">0.431</td>
+<td style="text-align: right;">0.243</td>
+<td style="text-align: right;">0.330</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">w3 -&gt; w5</td>
+<td style="text-align: right;">1614</td>
+<td style="text-align: right;">0.482</td>
+<td style="text-align: right;">0.558</td>
+<td style="text-align: right;">0.275</td>
+<td style="text-align: right;">0.358</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">w5 -&gt; w7</td>
+<td style="text-align: right;">1407</td>
+<td style="text-align: right;">0.513</td>
+<td style="text-align: right;">0.566</td>
+<td style="text-align: right;">0.313</td>
+<td style="text-align: right;">0.331</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p><code>occupation_changed</code> is the share of respondents whose occupational position (NEET, low, middle, high) differs between the two network waves.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

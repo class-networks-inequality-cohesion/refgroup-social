@@ -1,0 +1,195 @@
+---
+title: "Mobility trajectories: original, corrected, and oscillating versions (Study 2)"
+author: "Julio César Iturra-Sanhueza"
+date: today
+format:
+  html:
+    toc: true
+    code-fold: false
+    df-print: kable
+execute:
+  warning: false
+  message: false
+editor_options:
+  chunk_output_type: console
+---
+
+## Setup
+
+```{r setup}
+set1 <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
+options(ggplot2.discrete.fill = set1)
+options(ggplot2.discrete.colour = set1)
+ggplot2::theme_set(ggplot2::theme_bw())
+ggplot2::theme_update(text = ggplot2::element_text(size = 15, family = "serif"))
+options(scipen = 999)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(dplyr, tidyr, lme4, ggplot2, ggtext, scales)
+```
+
+## Purpose
+
+This document compares the mobility trajectories of the paper with corrected and alternative versions built in `prod_prep-mobility-alt.R`. It does not change the paper's pipeline.
+
+| Version | Variable | What changes |
+|---|---|---|
+| Original | `prof_orig_<k>` | Replication of `00-main_analysis.Rmd` (identical to the stored variables) |
+| Corrected labels | `prof_fix_<k>` | The 75% rule also applies to *Upward (L to M)*, *(M to H)*, and *(L to H)* |
+| Corrected labels + NA | `prof_fixna_<k>` | Also, a missing occupation is treated as missing instead of NEET |
+| P2 | `prof_p2_<k>` | Sequence typology with *Oscillating*, single interior deviations smoothed |
+| P3 | `prof_p3_<k>` | P2 + corrected 75% rule |
+
+`<k>` is the position variable: `isco3` (alternative A, used in the paper), `isco3b`, `isco3c`, `isco3d`, and `egp3`.
+
+## Step 1. Data and analytical sample
+
+The analytical sample is the paper's (6,574 observations, 2,872 individuals). It is selected with the original variables, so it is the same for all versions.
+
+```{r load}
+if (!file.exists(here::here("input/data/proc/df1_panel_mobility_alt.RData")))
+  source(here::here("procesamiento/prod_prep-mobility-alt.R"))
+load(here::here("input/data/proc/df1_panel_mobility_alt.RData"))   # df1_alt, traj_alt
+df1_alt <- as.data.frame(df1_alt)
+
+militares <- df1_alt %>% filter(isco08_1lvl == "0000") %>% pull(id) %>% unique()
+vars_paper <- c("id", "time",
+  "market", "just_educ", "just_salud", "just_pension",
+  "n_total", "isei_avg", "entropy_contacts", "know_total", "crossclass", "strong_tie",
+  "sex", "age", "parenteducw1", "migrationw1", "isco_father", "partner",
+  "isei_c", "isco03_neet",
+  "mobility_cat_adj_isco3", "mobility_cat_unadj", "mobility_cat_adj_isco3b",
+  "mobility_cat_adj_isco3c", "mobility_cat_adj_isco3d", "mobility_cat_adj_egp3", "moves",
+  "ponderador02", "weights1", "atricion")
+an <- df1_alt %>% filter(!id %in% militares) %>% select(all_of(vars_paper)) %>% na.omit() %>% as.data.frame()
+stopifnot(nrow(an) == 6574, n_distinct(an$id) == 2872)
+an <- an %>% left_join(traj_alt, by = "id")
+
+alts     <- c(isco3 = "A (paper)", isco3b = "B", isco3c = "C", isco3d = "D", egp3 = "EGP")
+versions <- c(orig = "Original", fix = "Corrected labels", fixna = "Corrected labels + NA",
+              p2 = "P2 (oscillating)", p3 = "P3 (oscillating + 75%)")
+groups   <- c("Stable: NEET", "Stable: low", "Stable: middle", "Stable: high", "Upward", "Downward", "Oscillating")
+```
+
+## Step 2. How many respondents change category
+
+### Persons per category
+
+```{r counts}
+persons <- an[!duplicated(an$id), ]
+counts <- bind_rows(lapply(names(alts), function(k) bind_rows(lapply(names(versions), function(v) {
+  x <- factor(persons[[paste0("prof_", v, "_", k)]], levels = groups)
+  data.frame(alternative = alts[[k]], version = versions[[v]], group = groups, n = as.numeric(table(x)))
+})))) %>%
+  mutate(version = factor(version, levels = versions), group = factor(group, levels = groups))
+
+counts %>% pivot_wider(names_from = version, values_from = n) %>% arrange(alternative, group)
+```
+
+### Respondents reclassified by the label correction
+
+```{r reclassified}
+bind_rows(lapply(names(alts), function(k) {
+  o <- persons[[paste0("traj_orig_", k)]]; f <- persons[[paste0("traj_fix_", k)]]
+  fn <- persons[[paste0("traj_fixna_", k)]]
+  data.frame(alternative = alts[[k]],
+             changed_by_label_fix = sum(o != f, na.rm = TRUE),
+             changed_by_label_and_na_fix = sum(o != fn, na.rm = TRUE),
+             share_label_fix = round(mean(o != f, na.rm = TRUE), 3))
+}))
+
+# Detail for alternative A: original detailed category -> corrected category
+with(persons[persons$traj_orig_isco3 != persons$traj_fix_isco3, ],
+     table(original = traj_orig_isco3, corrected = traj_fix_isco3))
+# Sequences behind those changes
+with(persons[persons$traj_orig_isco3 != persons$traj_fix_isco3, ], table(seq_isco3))
+```
+
+## Step 3. Consequences for the main model
+
+The paper's interaction model (Table S4: weighted hybrid random intercept model, diversity WE × trajectory) is estimated with each alternative and each version. *Stable: low* is the reference in all models. The AME of diversity (WE) in each group is its within-person slope, computed as a linear combination of coefficients (delta method).
+
+```{r prep}
+pca <- psych::pca(r = an %>% select(entropy_contacts, know_total, crossclass), nfactors = 1, rotate = "oblimin",
+                  scores = TRUE, missing = TRUE, cor = "cor", weight = an$ponderador02)
+an$diversityclass    <- as.numeric(pca$scores)
+an$parenteducw1      <- factor(an$parenteducw1, ordered = FALSE)
+an$migrationw1       <- factor(an$migrationw1, ordered = FALSE)
+an$time              <- factor(car::recode(an$time, "3=2;7=3"))
+an$market1           <- as.numeric(scale(an$market))
+an$diversityclass_gm <- ave(an$diversityclass, an$id, FUN = mean)
+an$partner_gm        <- ave(an$partner, an$id, FUN = mean)
+an$diversityclass_gc <- an$diversityclass - an$diversityclass_gm
+```
+
+```{r models}
+fit_traj <- function(var) {
+  d <- an[!is.na(an[[var]]), ]
+  d$traj <- relevel(factor(d[[var]]), ref = "Stable: low")
+  lmer(market1 ~ diversityclass_gc*traj + diversityclass_gm + sex + age + parenteducw1 + migrationw1 +
+         partner + partner_gm + time + (1|id), data = d, weights = weights1)
+}
+ame_lc <- function(m, w) {
+  b <- fixef(m); V <- as.matrix(vcov(m))
+  L <- setNames(rep(0, length(b)), names(b)); L[names(w)] <- unlist(w)
+  est <- sum(L * b); se <- sqrt(drop(t(L) %*% V %*% L))
+  data.frame(AME = est, SE = se, lo = est - 1.96 * se, hi = est + 1.96 * se, p = 2 * pnorm(-abs(est / se)))
+}
+ame_traj <- function(m) {
+  g <- sub("^diversityclass_gc:traj", "", grep("^diversityclass_gc:traj", names(fixef(m)), value = TRUE))
+  do.call(rbind, lapply(c("Stable: low", g), function(k) {
+    w <- list(diversityclass_gc = 1)
+    if (k != "Stable: low") w[[paste0("diversityclass_gc:traj", k)]] <- 1
+    cbind(group = k, ame_lc(m, w))
+  }))
+}
+
+mods <- list(); ame_all <- list()
+for (k in names(alts)) for (v in names(versions)) {
+  m <- fit_traj(paste0("prof_", v, "_", k))
+  mods[[paste(k, v)]] <- m
+  ame_all[[paste(k, v)]] <- cbind(alternative = alts[[k]], version = versions[[v]], nobs = nobs(m), ame_traj(m))
+}
+ame_all <- bind_rows(ame_all) %>%
+  mutate(version = factor(version, levels = versions), group = factor(group, levels = rev(groups)),
+         alternative = factor(alternative, levels = alts))
+
+# Check: the original version of alternative A reproduces Table S4
+round(fixef(mods[["isco3 orig"]])[c("diversityclass_gc", "diversityclass_gc:trajStable: high")], 3)
+```
+
+### AME of diversity (WE) by trajectory
+
+```{r ame-table}
+stars <- function(p) ifelse(p < 0.001, "***", ifelse(p < 0.01, "**", ifelse(p < 0.05, "*", ifelse(p < 0.1, "+", ""))))
+ame_all %>%
+  mutate(cell = paste0(sprintf("%.3f", AME), stars(p))) %>%
+  select(alternative, group, version, cell) %>%
+  pivot_wider(names_from = version, values_from = cell) %>%
+  arrange(alternative, desc(group))
+```
+
+### Plots
+
+```{r plot-a, fig.width=11, fig.height=7}
+plot_ame <- function(d, ncol = NULL) {
+  ggplot(d, aes(x = group, y = AME, color = version, shape = version)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_pointrange(aes(ymin = lo, ymax = hi), position = position_dodge(width = 0.75), size = 0.35) +
+    scale_color_manual(values = c("black", "grey55", set1[2], set1[1], set1[3])) +
+    coord_flip() +
+    labs(x = NULL, y = "AME of network diversity (WE)", color = NULL, shape = NULL,
+         caption = "*Note*: N = 6574 (2872 individuals). 95% CIs. Weighted hierarchical linear models (HLM).") +
+    guides(color = guide_legend(nrow = 2), shape = guide_legend(nrow = 2)) +
+    theme(plot.caption = element_markdown(hjust = 1, size = 12, family = "serif"),
+          legend.position = "bottom", panel.grid.minor = element_blank())
+}
+p <- plot_ame(ame_all %>% filter(alternative == "A (paper)")); p
+ggsave(plot = p, filename = "figureS_recode_isco3.png", path = here::here("output/images"),
+       width = 1.5, height = 1, scale = 15, device = "png", units = "cm", dpi = "retina")
+```
+
+```{r plot-all, fig.width=16, fig.height=10}
+p <- plot_ame(ame_all) + facet_wrap(~ alternative, nrow = 2); p
+ggsave(plot = p, filename = "figureS_recode_all.png", path = here::here("output/images"),
+       width = 2.4, height = 1.5, scale = 15, device = "png", units = "cm", dpi = "retina")
+```
